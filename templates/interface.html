@@ -87,22 +87,30 @@
             <!-- Cleaned Hourglass Structure (Removed side label text completely) -->
             <div class="hourglass-wrapper">
                 <svg class="glass-svg" viewBox="0 0 100 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Outer Framework Casing Endcaps -->
+                    <defs>
+                        <clipPath id="topBulbClip">
+                            <path d="M16 13 L48.5 67.5 L51.5 67.5 L84 13 Z" />
+                        </clipPath>
+                        <clipPath id="bottomBulbClip">
+                            <path d="M16 127 L48.5 72.5 L51.5 72.5 L84 127 Z" />
+                        </clipPath>
+                    </defs>
+
                     <line x1="10" y1="10" x2="90" y2="10" stroke="white" stroke-width="4" stroke-linecap="round"/>
                     <line x1="10" y1="130" x2="90" y2="130" stroke="white" stroke-width="4" stroke-linecap="round"/>
                     
-                    <!-- Glass Enclosure Contour Bezels -->
-                    <path d="M15 12 L48 68 C49 70 51 70 52 68 L85 12 Z" stroke="#333" stroke-width="1.5"/>
-                    <path d="M15 128 L48 72 C49 70 51 70 52 72 L85 128 Z" stroke="#333" stroke-width="1.5"/>
+                    <path d="M15 12 L48.5 68 C49 69 51 69 51.5 68 L85 12 Z" stroke="#333" stroke-width="1.5"/>
+                    <path d="M15 128 L48.5 72 C49 71 51 71 51.5 72 L85 128 Z" stroke="#333" stroke-width="1.5"/>
                     
-                    <!-- TOP CHAMBER: Potential Sand Pool -->
-                    <path id="topSand" d="M16 14 L48 68 L52 68 L84 14 Z" fill="#fff"/>
+                    <g clip-path="url(#topBulbClip)">
+                        <rect id="topSandRect" x="10" y="10" width="80" height="58" fill="#fff" />
+                    </g>
                     
-                    <!-- BOTTOM CHAMBER: Spent Sand Mound (Will be mathematically restricted) -->
-                    <path id="bottomSand" d="M16 126 L84 126 L84 126 L16 126 Z" fill="#fff"/>
+                    <g clip-path="url(#bottomBulbClip)">
+                        <rect id="bottomSandRect" x="10" y="127" width="80" height="0" fill="#fff" />
+                    </g>
                     
-                    <!-- SAND FLOW spine: Real-Time Falling Dotted Sand Stream -->
-                    <line x1="50" y1="68" x2="50" y2="126" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 4" id="fallingSandStream"/>
+                    <line x1="50" y1="68" x2="50" y2="127" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 4" id="fallingSandStream"/>
                 </svg>
             </div>
 
@@ -210,40 +218,36 @@
                 });
         }
 
-        function adjustHourglassSand(spentPct) {
-    const topSand = document.getElementById('topSand');
-    const bottomSand = document.getElementById('bottomSand');
+function adjustHourglassSand(spentPct) {
+    const topSandRect = document.getElementById('topSandRect');
+    const bottomSandRect = document.getElementById('bottomSandRect');
     const stream = document.getElementById('fallingSandStream');
     
-    const potentialPct = 100 - spentPct;
-
-    // 1. Top Chamber Calculus: Drains cleanly towards center neck
-    const topFactor = potentialPct / 100;
-    const topY = 68 - (54 * topFactor); 
-    const topLeftX = 50 - (34 * topFactor);
-    const topRightX = 50 + (34 * topFactor);
+    // --- 1. TOP CHAMBER: Moves the top edge downward from Y=10 to Y=68 ---
+    // At 0% spent, height is full (58px). At 100% spent, height drops to 0.
+    const potentialFactor = (100 - spentPct) / 100;
+    const topCalculatedHeight = 58 * potentialFactor;
+    const topCalculatedY = 68 - topCalculatedHeight;
     
-    topSand.setAttribute('d', `M${topLeftX} ${topY} L48 68 L52 68 L${topRightX} ${topY} Z`);
+    topSandRect.setAttribute('y', topCalculatedY);
+    topSandRect.setAttribute('height', topCalculatedHeight);
 
-    // 2. Bottom Chamber Calculus: Constrains the width to match the sloped glass walls
-    const bottomFactor = spentPct / 100;
-    const bottomY = 126 - (54 * bottomFactor); 
+    // --- 2. BOTTOM CHAMBER: Fills upward from floor (Y=127) towards neck (Y=72) ---
+    // Max fill height range is 55px. Moves y coordinate up as height increases.
+    const spentFactor = spentPct / 100;
+    const bottomCalculatedHeight = 55 * spentFactor;
+    const bottomCalculatedY = 127 - bottomCalculatedHeight;
     
-    // Mathematically scales the left and right coordinates of the rising sand top surface
-    // to match the exact 15px to 48px angle profile of the glass boundary lines
-    const currentMoundWidthOffset = 34 - (16.5 * bottomFactor);
-    const bottomLeftMoundX = 50 - currentMoundWidthOffset;
-    const bottomRightMoundX = 50 + currentMoundWidthOffset;
-    
-    // Bottom baseline coordinates match glass corners exactly (Left: 16, Right: 84)
-    bottomSand.setAttribute('d', `M16 126 L84 126 L${bottomRightMoundX} ${bottomY} L${bottomLeftMoundX} ${bottomY} Z`);
+    bottomSandRect.setAttribute('y', bottomCalculatedY);
+    bottomSandRect.setAttribute('height', bottomCalculatedHeight);
 
-    // 3. Falling Sand Stream logic
+    // --- 3. STREAM TOGGLE LOGIC ---
     if (spentPct <= 0 || spentPct >= 100) {
         stream.style.display = 'none';
     } else {
         stream.style.display = 'block';
-        stream.setAttribute('y2', bottomY);
+        // Snap the bottom of the stream dot line cleanly to meet the fluid surface level
+        stream.setAttribute('y2', bottomCalculatedY);
     }
 }
 
