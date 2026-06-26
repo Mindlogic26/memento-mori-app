@@ -40,32 +40,39 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     weeks_this_year = int(days_since_birthday / 7)
     total_weeks_lived = (age_years * 52) + weeks_this_year
 
-    # --- RECALIBRATED MARGIN GEOMETRY ENGINE ---
+ # --- FIXED ARCHIVAL GEOMETRY PROFILES ---
     if expected_life > 80:
-        box_size = 2.4*mm
-        padding = 0.8*mm
-        decade_gap = 3.5*mm
-        top_margin = 35*mm  # Push down slightly on 100 to balance the smaller matrix height
+        # Profile for 81-100 Lifespan
+        box_size = 2.1*mm       
+        padding = 0.7*mm
+        decade_gap = 3.0*mm
+        start_x = 54*mm
+        header_y = height - 38*mm  # Lowered to protect the bottom margin area
+        grid_start_y = header_y - 20*mm
+        
+        num_decade_gaps = (expected_life - 1) // 10
+        total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
+        grid_end_y = grid_start_y - total_grid_height
+        box_bottom = grid_end_y - 16*mm
+        
+        img_center_y = 196*mm
+        title_center_y = 196*mm
     else:
-        box_size = 3.0*mm         
-        padding = 1.0*mm          
-        decade_gap = 4.3*mm 
-        top_margin = 25*mm
-
-    start_x = 54*mm 
-    gap_between_halves = 8*mm 
-    
-    total_grid_width = (52 * box_size) + (50 * padding) + gap_between_halves
-    end_of_grid_x = start_x + total_grid_width
-    
-    header_y = height - top_margin 
-    grid_start_y = header_y - 25*mm 
-    
-    num_decade_gaps = (expected_life - 1) // 10
-    total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
-    grid_end_y = grid_start_y - total_grid_height
-    
-    box_bottom = grid_end_y - 22*mm 
+        # Profile for <= 80 Lifespan
+        box_size = 2.8*mm          # Shifted slightly from 3.0 to raise bottom footprint
+        padding = 0.9*mm          
+        decade_gap = 4.0*mm 
+        start_x = 54*mm
+        header_y = height - 32*mm  # Lowered from 24mm to give the base plenty of breathing room
+        grid_start_y = header_y - 20*mm
+        
+        num_decade_gaps = (expected_life - 1) // 10
+        total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
+        grid_end_y = grid_start_y - total_grid_height
+        box_bottom = grid_end_y - 18*mm
+        
+        img_center_y = 196*mm
+        title_center_y = 196*mm
 
     # --- CALCULATE THE TRUE MIDDLE OF THE GRID LOGIC ---
     grid_center_y = grid_end_y + (total_grid_height / 2)
