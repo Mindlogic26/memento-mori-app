@@ -22,15 +22,17 @@
         .stage { display: none; }
         .stage.active { display: block; }
 
-        /* PAGE 2: HOURGLASS STYLING MATCHING IMAGE_E49B6F.PNG */
+        /* PAGE 2: HOURGLASS STYLING MATCHING IMAGE_E50B89.PNG */
         .hourglass-wrapper { position: relative; width: 160px; height: 220px; margin: 40px auto 30px auto; }
-        .hg-label-left { position: absolute; left: -30px; top: 45%; transform: rotate(-90deg); font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; }
-        .hg-label-right { position: absolute; right: -25px; top: 45%; transform: rotate(90deg); font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; }
+        
+        /* Precision centered using 50% offset and absolute transform translation alignment */
+        .hg-label-left { position: absolute; left: -45px; top: 50%; transform: translateY(-50%) rotate(-90deg); transform-origin: center; font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; width: 100px; text-align: center; }
+        .hg-label-right { position: absolute; right: -45px; top: 50%; transform: translateY(-50%) rotate(90deg); transform-origin: center; font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; width: 100px; text-align: center; }
         
         .glass-svg { width: 100%; height: 100%; }
         .equilibrium-line { width: 100%; height: 1px; background: #333; margin: 15px 0; }
         .eq-footer-text { font-size: 10px; color: #444; letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-top: 5px; }
-
+        
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .stat-card { background: #181818; border: 1px solid #262626; padding: 15px; border-radius: 8px; text-align: center; }
         .stat-val { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 4px; }
@@ -82,42 +84,39 @@
             <h1>TEMPORAL BALANCE</h1>
             <p class="subtitle" id="statsUserTitle">LIFETIME QUANTIFICATION</p>
             
-            <!-- Dynamic Hourglass Render Matching image_e49b6f.png -->
+            <!-- Mathematically Calibrated Hourglass Structure matching image_e4fca4.png -->
             <div class="hourglass-wrapper">
                 <div class="hg-label-left">Potential</div>
                 <div class="hg-label-right">Spent</div>
                 
                 <svg class="glass-svg" viewBox="0 0 100 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Outer Framework Casing -->
+                    <!-- Outer Framework Casing Endcaps -->
                     <line x1="10" y1="10" x2="90" y2="10" stroke="white" stroke-width="4" stroke-linecap="round"/>
                     <line x1="10" y1="130" x2="90" y2="130" stroke="white" stroke-width="4" stroke-linecap="round"/>
                     
-                    <!-- Glass Enclosure Outlines -->
-                    <path d="M15 12 L48 68 C49 70 51 70 52 68 L85 12 Z" stroke="#333" stroke-width="2"/>
-                    <path d="M15 128 L48 72 C49 70 51 70 52 72 L85 128 Z" stroke="#333" stroke-width="2"/>
+                    <!-- Glass Enclosure Contour Bezels -->
+                    <path d="M15 12 L48 68 C49 70 51 70 52 68 L85 12 Z" stroke="#333" stroke-width="1.5"/>
+                    <path d="M15 128 L48 72 C49 70 51 70 52 72 L85 128 Z" stroke="#333" stroke-width="1.5"/>
                     
-                    <!-- Top Chamber: Remaining Potential Liquid Sand Area -->
-                    <!-- Clips height dynamically from JavaScript based on remaining potential -->
-                    <g id="topSandContainer">
-                        <path id="topSand" d="M22 25 L48 68 L52 68 L78 25 Z" fill="#fff"/>
-                    </g>
+                    <!-- TOP CHAMBER: Potential Sand Pool (Inverted Triangle Draining Down) -->
+                    <path id="topSand" d="M16 14 L48 68 L52 68 L84 14 Z" fill="#fff"/>
                     
-                    <!-- Bottom Chamber: Lived Accumulation Sand Area -->
-                    <path id="bottomSand" d="M22 118 L48 72 L52 72 L78 118 Z" fill="#333"/>
+                    <!-- BOTTOM CHAMBER: Spent Sand Mound (Fills Up Uniformly From The Base Floor) -->
+                    <path id="bottomSand" d="M16 126 L84 126 L84 126 L16 126 Z" fill="#fff"/>
                     
-                    <!-- Center Point Drop Stream Indicator -->
-                    <line x1="50" y1="68" x2="50" y2="115" stroke="white" stroke-width="1.5" stroke-dasharray="2 3"/>
+                    <!-- SAND FLOW spine: Real-Time Falling Dotted Sand Stream -->
+                    <line x1="50" y1="68" x2="50" y2="126" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 4" id="fallingSandStream"/>
                 </svg>
             </div>
 
-            <!-- Percentages Readout Layout Structure Matching image_e49b6f.png -->
+            <!-- Percentages Layout Grid Component matching image_e4fca4.png -->
             <div class="pct-readout">
                 <div class="pct-block">
                     <div class="pct-lbl">Spent</div>
                     <div class="pct-num spent" id="spentPctText">0.0%</div>
                 </div>
                 <div class="pct-block">
-                    <div class="pct-lbl">Potentia</div>
+                    <div class="pct-lbl">Potential</div>
                     <div class="pct-num potential" id="potentialPctText">0.0%</div>
                 </div>
             </div>
@@ -126,7 +125,7 @@
             <div class="eq-footer-text">Temporal Equilibrium</div>
             <div style="margin-top: 30px;"></div>
 
-            <!-- Absolute Metric Numeric Readouts -->
+            <!-- Quantitative Incremental Counters -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-val" id="spentWeeks">0</div>
@@ -147,7 +146,7 @@
             <h1>PREVIEW MATRIX</h1>
             <p class="subtitle">80-YEAR ARCHIVAL BLUEPRINT</p>
             
-            <!-- Real-time Render Sample Component Box -->
+            <!-- Real-time Render Preview Bounding Canvas Box -->
             <div class="preview-canvas" id="calendarPreview">
                 <div class="preview-meta" id="previewTitle">ROBERT'S MATRIX CONFIG</div>
                 <div class="preview-rows" id="miniGrid"></div>
@@ -165,7 +164,7 @@
                     Generate and download your uncompromised high-resolution, full scale A3 canvas print file.
                 </p>
                 
-                <!-- Configure your Gumroad redirect product key here -->
+                <!-- Point this link directly to your Gumroad digital overlay link string -->
                 <a href="https://gum.co/YOUR_PRODUCT_PERMALINK" target="_blank" style="text-decoration: none;">
                     <button style="background: #00ffcc; color: #000; margin-bottom: 25px;">Buy Archival Access — $9.99</button>
                 </a>
@@ -188,13 +187,13 @@
             
             if(!name || !bday) { alert("Please input your full identity configurations."); return; }
             
-            // Execute background module fetch parameters
+            // Call our modular backend api pipeline
             fetch(`/?action=metrics&birthday=${bday}`)
                 .then(res => res.json())
                 .then(data => {
                     cachedMetrics = data;
                     
-                    // Update Page 2 Elements
+                    // Populate Page 2 values
                     document.getElementById('statsUserTitle').innerText = `${name.toUpperCase()}'S LIFETIME STRATA`;
                     document.getElementById('spentWeeks').innerText = data.weeks_spent.toLocaleString();
                     document.getElementById('futureWeeks').innerText = data.weeks_future.toLocaleString();
@@ -205,10 +204,10 @@
                     document.getElementById('spentPctText').innerText = spentPct + "%";
                     document.getElementById('potentialPctText').innerText = potentialPct + "%";
                     
-                    // Scale hourglass graphic vector sand layout lines
+                    // Run the precision coordinate sand rendering fluid calculus
                     adjustHourglassSand(spentPct);
                     
-                    // Advance screen window view state
+                    // Transition panel views
                     document.getElementById('page1').classList.remove('active');
                     document.getElementById('page2').classList.add('active');
                 });
@@ -217,19 +216,32 @@
         function adjustHourglassSand(spentPct) {
             const topSand = document.getElementById('topSand');
             const bottomSand = document.getElementById('bottomSand');
+            const stream = document.getElementById('fallingSandStream');
             
-            // Scale vector polygon sand constraints based on percentage data
-            // Top sand gets progressively smaller as lifetime leaves
-            const factor = (100 - spentPct) / 100;
-            const targetY = 25 + (43 * (1 - factor)); 
-            const leftX = 22 + (26 * (1 - factor));
-            const rightX = 78 - (26 * (1 - factor));
+            const potentialPct = 100 - spentPct;
+
+            // 1. Top Chamber Physics: Triangle polygon drains downward from ceiling
+            const topFactor = potentialPct / 100;
+            const topY = 68 - (54 * topFactor); 
+            const topLeftX = 50 - (34 * topFactor);
+            const topRightX = 50 + (34 * topFactor);
             
-            topSand.setAttribute('d', `M${leftX} ${targetY} L48 68 L52 68 L${rightX} ${targetY} Z`);
+            topSand.setAttribute('d', `M${topLeftX} ${topY} L48 68 L52 68 L${topRightX} ${topY} Z`);
+
+            // 2. Bottom Chamber Physics: Sand mounds flatly upward from floor base (Y=126)
+            const bottomFactor = spentPct / 100;
+            const bottomY = 126 - (54 * bottomFactor); 
+            const bottomLeftMoundX = 50 - (34 * bottomFactor);
+            const bottomRightMoundX = 50 + (34 * bottomFactor);
             
-            // Brighten up active bottom container fill to signify lived balance weight
-            if (spentPct > 5) {
-                bottomSand.setAttribute('fill', '#fff');
+            bottomSand.setAttribute('d', `M16 126 L84 126 L${bottomRightMoundX} ${bottomY} L${bottomLeftMoundX} ${bottomY} Z`);
+
+            // 3. Falling Stream Check
+            if (spentPct <= 0 || spentPct >= 100) {
+                stream.style.display = 'none';
+            } else {
+                stream.style.display = 'block';
+                stream.setAttribute('y2', bottomY); // Link terminal sand line node directly to mound surface coordinate
             }
         }
 
