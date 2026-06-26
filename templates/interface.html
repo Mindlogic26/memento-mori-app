@@ -3,149 +3,259 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memento Mori</title>
+    <title>Memento Mori Blueprint</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #0b0b0b; color: #fff; margin: 0; }
-        .card { background: #121212; padding: 35px 25px; border-radius: 16px; max-width: 440px; margin: 20px auto; border: 1px solid #1f1f1f; box-sizing: border-box; }
-        h1 { font-family: "Times New Roman", serif; letter-spacing: 4px; font-weight: bold; margin-bottom: 5px; }
-        p.subtitle { color: #555; font-size: 14px; margin-top: 0; margin-bottom: 25px; font-style: italic; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b0b0b; color: #fff; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .app-container { background: #121212; padding: 40px 30px; border-radius: 16px; max-width: 440px; width: 100%; border: 1px solid #1f1f1f; box-sizing: border-box; }
         
-        label { display: block; text-align: left; margin-bottom: 6px; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-        input, select { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #2a2a2a; background: #161616; color: #fff; border-radius: 8px; box-sizing: border-box; }
+        h1 { font-family: "Times New Roman", serif; letter-spacing: 4px; font-weight: bold; text-align: center; margin-top: 0; margin-bottom: 5px; }
+        p.subtitle { color: #555; font-size: 13px; text-align: center; margin-top: 0; margin-bottom: 30px; font-style: italic; letter-spacing: 0.5px; }
+        p.explanation { color: #aaa; font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 30px; }
+        
+        label { display: block; text-align: left; margin-bottom: 6px; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        input, select { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 25px; border: 1px solid #2a2a2a; background: #161616; color: #fff; border-radius: 8px; box-sizing: border-box; }
         input[type="date"] { color-scheme: dark; }
         
-        button { padding: 15px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; letter-spacing: 1px; margin-top: 5px; }
+        button { padding: 15px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; letter-spacing: 1px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
         
-        /* Hourglass CSS Icon Component */
-        .hourglass-icon { font-size: 48px; margin: 15px auto 25px auto; color: #444; animation: flip 4s infinite ease-in-out; display: inline-block; }
-        @keyframes flip { 0%, 90% { transform: rotate(0); } 100% { transform: rotate(180deg); } }
+        .stage { display: none; }
+        .stage.active { display: block; }
 
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; display: none; }
-        .stat-box { background: #181818; border: 1px solid #262626; padding: 15px; border-radius: 8px; text-align: center; }
-        .stat-num { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 4px; }
+        /* PAGE 2: HOURGLASS STYLING MATCHING IMAGE_E49B6F.PNG */
+        .hourglass-wrapper { position: relative; width: 160px; height: 220px; margin: 40px auto 30px auto; }
+        .hg-label-left { position: absolute; left: -30px; top: 45%; transform: rotate(-90deg); font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; }
+        .hg-label-right { position: absolute; right: -25px; top: 45%; transform: rotate(90deg); font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .glass-svg { width: 100%; height: 100%; }
+        .equilibrium-line { width: 100%; height: 1px; background: #333; margin: 15px 0; }
+        .eq-footer-text { font-size: 10px; color: #444; letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-top: 5px; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
+        .stat-card { background: #181818; border: 1px solid #262626; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-val { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 4px; }
         .stat-lbl { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* THE PREVIEW CANVAS CONTAINER */
-        .preview-pane { display: none; margin-top: 30px; background: #fff; color: #000; border-radius: 8px; padding: 20px; box-sizing: border-box; border: 1px solid #e0e0e0; text-align: left; position: relative; overflow: hidden; }
-        .preview-header { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 10px; font-weight: bold; text-align: right; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .preview-grid-wrapper { display: flex; flex-direction: column; gap: 1px; }
-        .preview-row { display: flex; gap: 1px; }
-        .preview-box { width: 3px; height: 3px; background: #e0e0e0; }
-        .preview-box.filled { background: #000; }
-        .preview-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-family: "Times New Roman", serif; font-weight: bold; color: rgba(0,0,0,0.06); letter-spacing: 2px; pointer-events: none; text-align: center; white-space: nowrap; }
 
-        .paywall-section { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #262626; display: none; }
+        .pct-readout { display: flex; justify-content: space-between; padding: 0 10px; font-family: "Helvetica Neue", Arial, sans-serif; }
+        .pct-block { text-align: center; }
+        .pct-num { font-size: 20px; font-weight: bold; }
+        .pct-num.spent { color: #fff; }
+        .pct-num.potential { color: #666; }
+        .pct-lbl { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+
+        /* PAGE 3: CALENDAR MATRIX SAMPLE PREVIEW */
+        .preview-canvas { background: #fff; color: #000; border-radius: 8px; padding: 20px; box-sizing: border-box; border: 1px solid #e0e0e0; text-align: left; position: relative; overflow: hidden; margin-bottom: 30px; }
+        .preview-meta { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 10px; font-weight: bold; text-align: right; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; color: #000; }
+        .preview-rows { display: flex; flex-direction: column; gap: 1px; }
+        .preview-row { display: flex; gap: 1px; }
+        .preview-square { width: 3px; height: 3px; background: #e0e0e0; }
+        .preview-square.filled { background: #000; }
+        .preview-watermark { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-family: "Times New Roman", serif; font-weight: bold; color: rgba(0,0,0,0.05); letter-spacing: 2px; pointer-events: none; text-align: center; white-space: nowrap; }
+
+        .paywall-action-box { border-top: 1px dashed #262626; padding-top: 25px; margin-top: 25px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>MEMENTO MORI</h1>
-        <p class="subtitle">"Decide how deep the furrow goes."</p>
-        
-        <!-- STEP 1: WELCOME GATE WITH HOURGLASS GRAPHIC -->
-        <div id="step1">
-            <div class="hourglass-icon">⏳</div>
+    <div class="app-container">
+        <!-- ================= PAGE 1: THE EXPLANATION & INPUT GATEWAY ================= -->
+        <div id="page1" class="stage active">
+            <h1>MEMENTO MORI</h1>
+            <p class="subtitle">"Remember You Must Die"</p>
+            
+            <p class="explanation">
+                Memento Mori is an ancient Stoic reminder of the fleeting nature of human existence. It is not an invitation to despair, but a framework for clarity. By visualizing your lifetime structured into exact weekly increments, you transform abstract time into a finite, uncompromised asset canvas.
+            </p>
+            
             <label>Full Name</label>
             <input type="text" id="userName" placeholder="e.g. ROBERT" required>
             
             <label>Date of Birth</label>
             <input type="date" id="birthDate" required>
             
-            <button onclick="revealMetricsAndHook()">Calculate Metrics</button>
+            <button onclick="goToPage2()">Calculate Lifespan Matrix</button>
         </div>
 
-        <!-- STEP 2: METRICS PRESENTATION -->
-        <div class="stats-container" id="metricsPanel">
-            <div class="stat-box">
-                <div class="stat-num" id="spentWeeks">0</div>
-                <div class="stat-lbl">Weeks Spent</div>
+
+        <!-- ================= PAGE 2: STATS & HOURGLASS EQUILIBRIUM ================= -->
+        <div id="page2" class="stage">
+            <h1>TEMPORAL BALANCE</h1>
+            <p class="subtitle" id="statsUserTitle">LIFETIME QUANTIFICATION</p>
+            
+            <!-- Dynamic Hourglass Render Matching image_e49b6f.png -->
+            <div class="hourglass-wrapper">
+                <div class="hg-label-left">Potential</div>
+                <div class="hg-label-right">Spent</div>
+                
+                <svg class="glass-svg" viewBox="0 0 100 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Outer Framework Casing -->
+                    <line x1="10" y1="10" x2="90" y2="10" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="10" y1="130" x2="90" y2="130" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    
+                    <!-- Glass Enclosure Outlines -->
+                    <path d="M15 12 L48 68 C49 70 51 70 52 68 L85 12 Z" stroke="#333" stroke-width="2"/>
+                    <path d="M15 128 L48 72 C49 70 51 70 52 72 L85 128 Z" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Top Chamber: Remaining Potential Liquid Sand Area -->
+                    <!-- Clips height dynamically from JavaScript based on remaining potential -->
+                    <g id="topSandContainer">
+                        <path id="topSand" d="M22 25 L48 68 L52 68 L78 25 Z" fill="#fff"/>
+                    </g>
+                    
+                    <!-- Bottom Chamber: Lived Accumulation Sand Area -->
+                    <path id="bottomSand" d="M22 118 L48 72 L52 72 L78 118 Z" fill="#333"/>
+                    
+                    <!-- Center Point Drop Stream Indicator -->
+                    <line x1="50" y1="68" x2="50" y2="115" stroke="white" stroke-width="1.5" stroke-dasharray="2 3"/>
+                </svg>
             </div>
-            <div class="stat-box">
-                <div class="stat-num" id="futureWeeks">0</div>
-                <div class="stat-lbl">Weeks Left</div>
+
+            <!-- Percentages Readout Layout Structure Matching image_e49b6f.png -->
+            <div class="pct-readout">
+                <div class="pct-block">
+                    <div class="pct-lbl">Spent</div>
+                    <div class="pct-num spent" id="spentPctText">0.0%</div>
+                </div>
+                <div class="pct-block">
+                    <div class="pct-lbl">Potentia</div>
+                    <div class="pct-num potential" id="potentialPctText">0.0%</div>
+                </div>
             </div>
-            <div class="stat-box">
-                <div class="stat-num" id="livedYears">0</div>
-                <div class="stat-lbl">Years Lived</div>
+            
+            <div class="equilibrium-line"></div>
+            <div class="eq-footer-text">Temporal Equilibrium</div>
+            <div style="margin-top: 30px;"></div>
+
+            <!-- Absolute Metric Numeric Readouts -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-val" id="spentWeeks">0</div>
+                    <div class="stat-lbl">Weeks Lived</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-val" id="futureWeeks">0</div>
+                    <div class="stat-lbl">Weeks Remaining</div>
+                </div>
             </div>
-            <div class="stat-box">
-                <div class="stat-num" id="usedPct">0%</div>
-                <div class="stat-lbl">Life Used</div>
-            </div>
+            
+            <button onclick="goToPage3()">Reveal Blueprint Layout View</button>
         </div>
 
-        <!-- LIVE DYNAMIC SAMPLE CALENDAR PREVIEW BOX -->
-        <div class="preview-pane" id="calendarPreview">
-            <div class="preview-header" id="previewTitle">ROBERT'S ARCHIVAL MAP</div>
-            <div class="preview-grid-wrapper" id="miniGrid"></div>
-            <div class="preview-watermark" id="watermarkText">SAMPLE MAP PREVIEW</div>
-        </div>
 
-        <!-- STEP 3: CUSTOMIZATION OPTIONS AND PAYWALL -->
-        <div class="paywall-section" id="paywallPanel">
-            <label>Aesthetic Backdrop</label>
+        <!-- ================= PAGE 3: CALENDAR VIEW SAMPLE & PAYWALL ================= -->
+        <div id="page3" class="stage">
+            <h1>PREVIEW MATRIX</h1>
+            <p class="subtitle">80-YEAR ARCHIVAL BLUEPRINT</p>
+            
+            <!-- Real-time Render Sample Component Box -->
+            <div class="preview-canvas" id="calendarPreview">
+                <div class="preview-meta" id="previewTitle">ROBERT'S MATRIX CONFIG</div>
+                <div class="preview-rows" id="miniGrid"></div>
+                <div class="preview-watermark" id="watermarkText">SAMPLE ARCHIVAL BLUEPRINT</div>
+            </div>
+
+            <label>Backdrop Artwork Profile</label>
             <select id="artStyle" onchange="updatePreviewWatermark()">
-                <option value="skull">Classic Minimalist Skull</option>
-                <option value="clean">Clean Archival Grid Only</option>
+                <option value="skull">Classic Minimalist Skull Watermark</option>
+                <option value="clean">Clean Core Structural Grid Only</option>
             </select>
             
-            <p style="color: #888; font-size: 13px; margin: 20px 0; line-height: 1.4;">Unlock your personalized high-resolution A3 print file blueprint.</p>
-            
-            <!-- Replace with your actual Gumroad product link -->
-            <a href="https://gum.co/YOUR_PRODUCT_PERMALINK" target="_blank" style="text-decoration: none;">
-                <button style="background: #00ffcc; color: #000; margin-bottom: 25px;">Buy Access License — $9.99</button>
-            </a>
+            <div class="paywall-action-box">
+                <p style="color: #777; font-size: 13px; line-height: 1.5; margin-bottom: 20px;">
+                    Generate and download your uncompromised high-resolution, full scale A3 canvas print file.
+                </p>
+                
+                <!-- Configure your Gumroad redirect product key here -->
+                <a href="https://gum.co/YOUR_PRODUCT_PERMALINK" target="_blank" style="text-decoration: none;">
+                    <button style="background: #00ffcc; color: #000; margin-bottom: 25px;">Buy Archival Access — $9.99</button>
+                </a>
 
-            <div style="border-top: 1px dashed #222; padding-top: 20px;">
-                <label>Enter Order License Key</label>
-                <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX">
-                <button onclick="triggerPdfDownload()" style="background: #fff; color: #000;">Download High-Res Blueprint</button>
+                <div style="border-top: 1px solid #1f1f1f; padding-top: 25px; margin-top: 10px;">
+                    <label>Enter Order License Token</label>
+                    <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX">
+                    <button onclick="triggerPdfDownload()">Download High-Res Blueprint File</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        function revealMetricsAndHook() {
+        let cachedMetrics = null;
+
+        function goToPage2() {
             const name = document.getElementById('userName').value;
             const bday = document.getElementById('birthDate').value;
             
-            if(!name || !bday) { alert("Please complete both form inputs."); return; }
+            if(!name || !bday) { alert("Please input your full identity configurations."); return; }
             
+            // Execute background module fetch parameters
             fetch(`/?action=metrics&birthday=${bday}`)
                 .then(res => res.json())
                 .then(data => {
+                    cachedMetrics = data;
+                    
+                    // Update Page 2 Elements
+                    document.getElementById('statsUserTitle').innerText = `${name.toUpperCase()}'S LIFETIME STRATA`;
                     document.getElementById('spentWeeks').innerText = data.weeks_spent.toLocaleString();
                     document.getElementById('futureWeeks').innerText = data.weeks_future.toLocaleString();
-                    document.getElementById('livedYears').innerText = data.years_lived;
-                    document.getElementById('usedPct').innerText = data.life_used_pct + "%";
                     
-                    document.getElementById('previewTitle').innerText = `${name.toUpperCase()}'S MAP SKELETON`;
+                    const spentPct = data.life_used_pct;
+                    const potentialPct = (100 - spentPct).toFixed(1);
                     
-                    // Generate miniature browser preview layout on screen
-                    generateMiniPreviewGrid(data.weeks_spent);
-                    updatePreviewWatermark();
+                    document.getElementById('spentPctText').innerText = spentPct + "%";
+                    document.getElementById('potentialPctText').innerText = potentialPct + "%";
                     
-                    document.getElementById('metricsPanel').style.display = 'grid';
-                    document.getElementById('calendarPreview').style.display = 'block';
-                    document.getElementById('paywallPanel').style.display = 'block';
-                    document.getElementById('step1').style.display = 'none'; // Clean up input fields once processed
+                    // Scale hourglass graphic vector sand layout lines
+                    adjustHourglassSand(spentPct);
+                    
+                    // Advance screen window view state
+                    document.getElementById('page1').classList.remove('active');
+                    document.getElementById('page2').classList.add('active');
                 });
+        }
+
+        function adjustHourglassSand(spentPct) {
+            const topSand = document.getElementById('topSand');
+            const bottomSand = document.getElementById('bottomSand');
+            
+            // Scale vector polygon sand constraints based on percentage data
+            // Top sand gets progressively smaller as lifetime leaves
+            const factor = (100 - spentPct) / 100;
+            const targetY = 25 + (43 * (1 - factor)); 
+            const leftX = 22 + (26 * (1 - factor));
+            const rightX = 78 - (26 * (1 - factor));
+            
+            topSand.setAttribute('d', `M${leftX} ${targetY} L48 68 L52 68 L${rightX} ${targetY} Z`);
+            
+            // Brighten up active bottom container fill to signify lived balance weight
+            if (spentPct > 5) {
+                bottomSand.setAttribute('fill', '#fff');
+            }
+        }
+
+        function goToPage3() {
+            const name = document.getElementById('userName').value;
+            
+            document.getElementById('previewTitle').innerText = `${name.toUpperCase()}'S MAP STRUCTURE`;
+            generateMiniPreviewGrid(cachedMetrics.weeks_spent);
+            updatePreviewWatermark();
+            
+            document.getElementById('page2').classList.remove('active');
+            document.getElementById('page3').classList.add('active');
         }
 
         function generateMiniPreviewGrid(weeksSpent) {
             const gridContainer = document.getElementById('miniGrid');
-            gridContainer.innerHTML = ''; // Wipe existing rows
+            gridContainer.innerHTML = ''; 
             
             let totalWeeksCounter = 0;
-            // Draw a compressed 80 row x 52 column preview block matrix
             for (let r = 0; r < 80; r++) {
                 const row = document.createElement('div');
                 row.className = 'preview-row';
                 
                 for (let c = 0; c < 52; c++) {
                     const cell = document.createElement('div');
-                    cell.className = 'preview-box';
+                    cell.className = 'preview-square';
                     if (totalWeeksCounter < weeksSpent) {
                         cell.classList.add('filled');
                     }
@@ -160,11 +270,9 @@
             const selectedStyle = document.getElementById('artStyle').value;
             const watermark = document.getElementById('watermarkText');
             if(selectedStyle === 'skull') {
-                watermark.innerText = "💀 SKULL BACKGROUND CONTENT";
-                watermark.style.color = "rgba(0,0,0,0.06)";
+                watermark.innerText = "💀 ARCHIVAL SKULL BACKDROP";
             } else {
-                watermark.innerText = "CLEAN CORE GRID";
-                watermark.style.color = "rgba(0,0,0,0.02)";
+                watermark.innerText = "MINIMAL ARCHIVAL GRID";
             }
         }
 
@@ -174,7 +282,7 @@
             const license = document.getElementById('licenseKey').value;
             const art = document.getElementById('artStyle').value;
             
-            if(!license) { alert("Please type your Gumroad key to confirm access."); return; }
+            if(!license) { alert("Please verify your access key parameters."); return; }
             
             const downloadUrl = `/?action=download&name=${encodeURIComponent(name)}&birthday=${bday}&license=${encodeURIComponent(license)}&artwork=${art}`;
             
