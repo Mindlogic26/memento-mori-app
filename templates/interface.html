@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memento Mori</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 40px 20px; background: #0b0b0b; color: #fff; margin: 0; }
-        .card { background: #121212; padding: 35px 25px; border-radius: 16px; max-width: 400px; margin: 20px auto; border: 1px solid #1f1f1f; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #0b0b0b; color: #fff; margin: 0; }
+        .card { background: #121212; padding: 35px 25px; border-radius: 16px; max-width: 440px; margin: 20px auto; border: 1px solid #1f1f1f; box-sizing: border-box; }
         h1 { font-family: "Times New Roman", serif; letter-spacing: 4px; font-weight: bold; margin-bottom: 5px; }
-        p.subtitle { color: #555; font-size: 14px; margin-top: 0; margin-bottom: 30px; font-style: italic; }
+        p.subtitle { color: #555; font-size: 14px; margin-top: 0; margin-bottom: 25px; font-style: italic; }
         
         label { display: block; text-align: left; margin-bottom: 6px; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
         input, select { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #2a2a2a; background: #161616; color: #fff; border-radius: 8px; box-sizing: border-box; }
@@ -16,13 +16,25 @@
         
         button { padding: 15px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; letter-spacing: 1px; margin-top: 5px; }
         
+        /* Hourglass CSS Icon Component */
+        .hourglass-icon { font-size: 48px; margin: 15px auto 25px auto; color: #444; animation: flip 4s infinite ease-in-out; display: inline-block; }
+        @keyframes flip { 0%, 90% { transform: rotate(0); } 100% { transform: rotate(180deg); } }
+
         .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; display: none; }
         .stat-box { background: #181818; border: 1px solid #262626; padding: 15px; border-radius: 8px; text-align: center; }
         .stat-num { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 4px; }
         .stat-lbl { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
         
+        /* THE PREVIEW CANVAS CONTAINER */
+        .preview-pane { display: none; margin-top: 30px; background: #fff; color: #000; border-radius: 8px; padding: 20px; box-sizing: border-box; border: 1px solid #e0e0e0; text-align: left; position: relative; overflow: hidden; }
+        .preview-header { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 10px; font-weight: bold; text-align: right; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .preview-grid-wrapper { display: flex; flex-direction: column; gap: 1px; }
+        .preview-row { display: flex; gap: 1px; }
+        .preview-box { width: 3px; height: 3px; background: #e0e0e0; }
+        .preview-box.filled { background: #000; }
+        .preview-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-family: "Times New Roman", serif; font-weight: bold; color: rgba(0,0,0,0.06); letter-spacing: 2px; pointer-events: none; text-align: center; white-space: nowrap; }
+
         .paywall-section { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #262626; display: none; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -31,7 +43,9 @@
         <h1>MEMENTO MORI</h1>
         <p class="subtitle">"Decide how deep the furrow goes."</p>
         
+        <!-- STEP 1: WELCOME GATE WITH HOURGLASS GRAPHIC -->
         <div id="step1">
+            <div class="hourglass-icon">⏳</div>
             <label>Full Name</label>
             <input type="text" id="userName" placeholder="e.g. ROBERT" required>
             
@@ -41,6 +55,7 @@
             <button onclick="revealMetricsAndHook()">Calculate Metrics</button>
         </div>
 
+        <!-- STEP 2: METRICS PRESENTATION -->
         <div class="stats-container" id="metricsPanel">
             <div class="stat-box">
                 <div class="stat-num" id="spentWeeks">0</div>
@@ -60,15 +75,24 @@
             </div>
         </div>
 
+        <!-- LIVE DYNAMIC SAMPLE CALENDAR PREVIEW BOX -->
+        <div class="preview-pane" id="calendarPreview">
+            <div class="preview-header" id="previewTitle">ROBERT'S ARCHIVAL MAP</div>
+            <div class="preview-grid-wrapper" id="miniGrid"></div>
+            <div class="preview-watermark" id="watermarkText">SAMPLE MAP PREVIEW</div>
+        </div>
+
+        <!-- STEP 3: CUSTOMIZATION OPTIONS AND PAYWALL -->
         <div class="paywall-section" id="paywallPanel">
             <label>Aesthetic Backdrop</label>
-            <select id="artStyle">
+            <select id="artStyle" onchange="updatePreviewWatermark()">
                 <option value="skull">Classic Minimalist Skull</option>
                 <option value="clean">Clean Archival Grid Only</option>
             </select>
             
             <p style="color: #888; font-size: 13px; margin: 20px 0; line-height: 1.4;">Unlock your personalized high-resolution A3 print file blueprint.</p>
             
+            <!-- Replace with your actual Gumroad product link -->
             <a href="https://gum.co/YOUR_PRODUCT_PERMALINK" target="_blank" style="text-decoration: none;">
                 <button style="background: #00ffcc; color: #000; margin-bottom: 25px;">Buy Access License — $9.99</button>
             </a>
@@ -88,7 +112,6 @@
             
             if(!name || !bday) { alert("Please complete both form inputs."); return; }
             
-            // Background API ping request to calculate dynamic time values
             fetch(`/?action=metrics&birthday=${bday}`)
                 .then(res => res.json())
                 .then(data => {
@@ -97,10 +120,52 @@
                     document.getElementById('livedYears').innerText = data.years_lived;
                     document.getElementById('usedPct').innerText = data.life_used_pct + "%";
                     
-                    // Smoothly animate the presentation states
+                    document.getElementById('previewTitle').innerText = `${name.toUpperCase()}'S MAP SKELETON`;
+                    
+                    // Generate miniature browser preview layout on screen
+                    generateMiniPreviewGrid(data.weeks_spent);
+                    updatePreviewWatermark();
+                    
                     document.getElementById('metricsPanel').style.display = 'grid';
+                    document.getElementById('calendarPreview').style.display = 'block';
                     document.getElementById('paywallPanel').style.display = 'block';
+                    document.getElementById('step1').style.display = 'none'; // Clean up input fields once processed
                 });
+        }
+
+        function generateMiniPreviewGrid(weeksSpent) {
+            const gridContainer = document.getElementById('miniGrid');
+            gridContainer.innerHTML = ''; // Wipe existing rows
+            
+            let totalWeeksCounter = 0;
+            // Draw a compressed 80 row x 52 column preview block matrix
+            for (let r = 0; r < 80; r++) {
+                const row = document.createElement('div');
+                row.className = 'preview-row';
+                
+                for (let c = 0; c < 52; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'preview-box';
+                    if (totalWeeksCounter < weeksSpent) {
+                        cell.classList.add('filled');
+                    }
+                    row.appendChild(cell);
+                    totalWeeksCounter++;
+                }
+                gridContainer.appendChild(row);
+            }
+        }
+
+        function updatePreviewWatermark() {
+            const selectedStyle = document.getElementById('artStyle').value;
+            const watermark = document.getElementById('watermarkText');
+            if(selectedStyle === 'skull') {
+                watermark.innerText = "💀 SKULL BACKGROUND CONTENT";
+                watermark.style.color = "rgba(0,0,0,0.06)";
+            } else {
+                watermark.innerText = "CLEAN CORE GRID";
+                watermark.style.color = "rgba(0,0,0,0.02)";
+            }
         }
 
         function triggerPdfDownload() {
@@ -111,8 +176,16 @@
             
             if(!license) { alert("Please type your Gumroad key to confirm access."); return; }
             
-            // Redirect directly to the download stream
-            window.location.href = `/?action=download&name=${encodeURIComponent(name)}&birthday=${bday}&license=${encodeURIComponent(license)}&artwork=${art}`;
+            const downloadUrl = `/?action=download&name=${encodeURIComponent(name)}&birthday=${bday}&license=${encodeURIComponent(license)}&artwork=${art}`;
+            
+            let dlFrame = document.getElementById('download_frame');
+            if (!dlFrame) {
+                dlFrame = document.createElement('iframe');
+                dlFrame.id = 'download_frame';
+                dlFrame.style.display = 'none';
+                document.body.appendChild(dlFrame);
+            }
+            dlFrame.src = downloadUrl;
         }
     </script>
 </body>
