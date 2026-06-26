@@ -9,8 +9,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A3
 from reportlab.lib.units import mm
 
-def build_pdf_buffer(user_name, birth_date_str, expected_life):
-    """Generates an archival-grade Memento Mori map with locked visual layout profiles."""
+def build_pdf_buffer(user_name, birth_date_str):
+    """Generates an archival-grade Memento Mori map locked to a premium 80-year visual profile."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A3)
     width, height = A3
@@ -39,41 +39,26 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     days_since_birthday = (current_date - last_birthday).days
     weeks_this_year = int(days_since_birthday / 7)
     total_weeks_lived = (age_years * 52) + weeks_this_year
-# --- RECALIBRATED ARCHIVAL GEOMETRY PROFILES ---
-    if expected_life > 80:
-        # Profile for 81-100 Lifespan (Sharper grid compression to reclaim massive margins)
-        box_size = 1.8*mm       
-        padding = 0.6*mm
-        decade_gap = 2.5*mm
-        start_x = 54*mm
-        header_y = height - 38*mm  
-        grid_start_y = header_y - 20*mm
-        
-        num_decade_gaps = (expected_life - 1) // 10
-        total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
-        grid_end_y = grid_start_y - total_grid_height
-        box_bottom = grid_end_y - 22*mm  
-        
-        img_center_y = 205*mm
-        title_center_y = 205*mm
-    else:
-        # Profile for <= 80 Lifespan
-        box_size = 2.8*mm          
-        padding = 0.9*mm          
-        decade_gap = 4.0*mm 
-        start_x = 54*mm
-        header_y = height - 32*mm  
-        grid_start_y = header_y - 20*mm
-        
-        num_decade_gaps = (expected_life - 1) // 10
-        total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
-        grid_end_y = grid_start_y - total_grid_height
-        box_bottom = grid_end_y - 18*mm
-        
-        img_center_y = 196*mm
-        title_center_y = 196*mm
 
-    # These 3 lines execute ONCE right here to calculate the final frame width
+    # --- PERFECTED SUITE OF COMPROMISE-FREE 80-YEAR GEOMETRY ---
+    expected_life = 80
+    box_size = 2.8*mm          
+    padding = 0.9*mm          
+    decade_gap = 4.0*mm 
+    start_x = 54*mm
+    header_y = height - 32*mm  
+    grid_start_y = header_y - 20*mm
+    
+    num_decade_gaps = (expected_life - 1) // 10
+    total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
+    grid_end_y = grid_start_y - total_grid_height
+    box_bottom = grid_end_y - 18*mm
+    
+    img_center_y = 196*mm
+    title_center_y = 196*mm
+    img_w = 260*mm
+    img_h = 336*mm
+
     gap_between_halves = 8*mm
     total_grid_width = (52 * box_size) + (50 * padding) + gap_between_halves
     end_of_grid_x = start_x + total_grid_width
@@ -88,8 +73,6 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     if image_file:
         c.saveState()
         c.setFillAlpha(0.24) 
-        img_w = 260*mm
-        img_h = 336*mm
         c.drawImage(image_file, (width - img_w)/2 + 12*mm, img_center_y - (img_h / 2), 
                     width=img_w, height=img_h, mask='auto')
         c.restoreState()
@@ -113,8 +96,7 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         10: "SPRING: LEARNING", 
         30: "SUMMER: ACTION", 
         50: "AUTUMN: HARVEST", 
-        70: "WINTER: WISDOM",
-        90: "LATE WINTER: REFLECTION"
+        70: "WINTER: WISDOM"
     }
 
     for year in range(1, expected_life + 1):
@@ -165,11 +147,13 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     c.setFont("Helvetica", 9)
     c.drawRightString(end_of_grid_x, header_y - 6*mm, f"ARCHIVAL MAP | {expected_life} YEAR POTENTIAL")
     
+    # Securely fixed to page margins so it never overlaps or conflicts
     c.setFont("Times-Italic", 11)
-    c.drawString(start_x, box_bottom + 12*mm, '"It is not that we have a short time to live,')
-    c.drawString(start_x, box_bottom + 7*mm, 'but that we waste a lot of it." - Seneca')
-    c.drawRightString(end_of_grid_x, box_bottom + 12*mm, '"Very little is needed to make a happy life;')
-    c.drawRightString(end_of_grid_x, box_bottom + 7*mm, 'it is all within yourself." - Marcus Aurelius')
+    c.drawString(start_x - 12*mm, box_bottom + 12*mm, '"It is not that we have a short time to live,')
+    c.drawString(start_x - 12*mm, box_bottom + 7*mm, 'but that we waste a lot of it." - Seneca')
+    
+    c.drawRightString(width - start_x + 12*mm, box_bottom + 12*mm, '"Very little is needed to make a happy life;')
+    c.drawRightString(width - start_x + 12*mm, box_bottom + 7*mm, 'it is all within yourself." - Marcus Aurelius')
 
     c.showPage()
     c.save()
@@ -191,12 +175,6 @@ html_form = """
         label { display: block; text-align: left; margin-bottom: 5px; color: #888; font-size: 14px; }
         input { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 8px; box-sizing: border-box; }
         input[type="date"] { color-scheme: dark; } 
-        
-        .slider-container { margin-bottom: 25px; text-align: left; }
-        .slider-val { float: right; color: #00ffcc; font-weight: bold; font-size: 16px; }
-        input[type="range"] { -webkit-appearance: none; width: 100%; background: #222; height: 6px; border-radius: 3px; outline: none; margin-top: 8px; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; cursor: pointer; }
-        
         button { padding: 14px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
         p { color: #666; font-size: 14px; line-height: 1.4; }
     </style>
@@ -204,7 +182,7 @@ html_form = """
 <body>
     <div class="card">
         <h2 style="letter-spacing: 2px; margin-bottom: 5px;">MEMENTO MORI</h2>
-        <p>Map your exact lifespan blueprint.</p>
+        <p>Map your exact 80-year lifespan blueprint.</p>
         
         <form action="/" method="get" style="margin-top: 25px;">
             <label>Your Name</label>
@@ -213,12 +191,7 @@ html_form = """
             <label>Your Birthday</label>
             <input type="date" name="birthday" max="2026-12-31" required>
             
-            <div class="slider-container">
-                <label>Target Lifespan: <span class="slider-val" id="valDisplay">80</span></label>
-                <input type="range" name="lifespan" min="50" max="100" value="80" oninput="document.getElementById('valDisplay').innerText = this.value">
-            </div>
-            
-            <button type="submit">Generate Custom Blueprint</button>
+            <button type="submit">Generate Archival Blueprint</button>
         </form>
     </div>
 </body>
@@ -232,9 +205,8 @@ class handler(BaseHTTPRequestHandler):
         query_components = parse_qs(urlparse(self.path).query)
         user_name = query_components.get("name", [None])[0]
         birth_date = query_components.get("birthday", [None])[0]
-        expected_life_str = query_components.get("lifespan", [None])[0]
 
-        if not user_name or not birth_date or not expected_life_str:
+        if not user_name or not birth_date:
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -242,8 +214,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         try:
-            expected_life = int(expected_life_str)
-            pdf_data = build_pdf_buffer(user_name, birth_date, expected_life)
+            pdf_data = build_pdf_buffer(user_name, birth_date)
             
             self.send_response(200)
             self.send_header('Content-type', 'application/pdf')
