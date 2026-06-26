@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memento Mori</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 40px 20px; background: #0b0b0b; color: #fff; margin: 0; }
+        .card { background: #121212; padding: 35px 25px; border-radius: 16px; max-width: 400px; margin: 20px auto; border: 1px solid #1f1f1f; box-sizing: border-box; }
+        h1 { font-family: "Times New Roman", serif; letter-spacing: 4px; font-weight: bold; margin-bottom: 5px; }
+        p.subtitle { color: #555; font-size: 14px; margin-top: 0; margin-bottom: 30px; font-style: italic; }
+        
+        label { display: block; text-align: left; margin-bottom: 6px; color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        input, select { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #2a2a2a; background: #161616; color: #fff; border-radius: 8px; box-sizing: border-box; }
+        input[type="date"] { color-scheme: dark; }
+        
+        button { padding: 15px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; letter-spacing: 1px; margin-top: 5px; }
+        
+        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; display: none; }
+        .stat-box { background: #181818; border: 1px solid #262626; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-num { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 4px; }
+        .stat-lbl { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .paywall-section { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #262626; display: none; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>MEMENTO MORI</h1>
+        <p class="subtitle">"Decide how deep the furrow goes."</p>
+        
+        <div id="step1">
+            <label>Full Name</label>
+            <input type="text" id="userName" placeholder="e.g. ROBERT" required>
+            
+            <label>Date of Birth</label>
+            <input type="date" id="birthDate" required>
+            
+            <button onclick="revealMetricsAndHook()">Calculate Metrics</button>
+        </div>
+
+        <div class="stats-container" id="metricsPanel">
+            <div class="stat-box">
+                <div class="stat-num" id="spentWeeks">0</div>
+                <div class="stat-lbl">Weeks Spent</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="futureWeeks">0</div>
+                <div class="stat-lbl">Weeks Left</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="livedYears">0</div>
+                <div class="stat-lbl">Years Lived</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="usedPct">0%</div>
+                <div class="stat-lbl">Life Used</div>
+            </div>
+        </div>
+
+        <div class="paywall-section" id="paywallPanel">
+            <label>Aesthetic Backdrop</label>
+            <select id="artStyle">
+                <option value="skull">Classic Minimalist Skull</option>
+                <option value="clean">Clean Archival Grid Only</option>
+            </select>
+            
+            <p style="color: #888; font-size: 13px; margin: 20px 0; line-height: 1.4;">Unlock your personalized high-resolution A3 print file blueprint.</p>
+            
+            <a href="https://gum.co/YOUR_PRODUCT_PERMALINK" target="_blank" style="text-decoration: none;">
+                <button style="background: #00ffcc; color: #000; margin-bottom: 25px;">Buy Access License — $9.99</button>
+            </a>
+
+            <div style="border-top: 1px dashed #222; padding-top: 20px;">
+                <label>Enter Order License Key</label>
+                <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX">
+                <button onclick="triggerPdfDownload()" style="background: #fff; color: #000;">Download High-Res Blueprint</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function revealMetricsAndHook() {
+            const name = document.getElementById('userName').value;
+            const bday = document.getElementById('birthDate').value;
+            
+            if(!name || !bday) { alert("Please complete both form inputs."); return; }
+            
+            // Background API ping request to calculate dynamic time values
+            fetch(`/?action=metrics&birthday=${bday}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('spentWeeks').innerText = data.weeks_spent.toLocaleString();
+                    document.getElementById('futureWeeks').innerText = data.weeks_future.toLocaleString();
+                    document.getElementById('livedYears').innerText = data.years_lived;
+                    document.getElementById('usedPct').innerText = data.life_used_pct + "%";
+                    
+                    // Smoothly animate the presentation states
+                    document.getElementById('metricsPanel').style.display = 'grid';
+                    document.getElementById('paywallPanel').style.display = 'block';
+                });
+        }
+
+        function triggerPdfDownload() {
+            const name = document.getElementById('userName').value;
+            const bday = document.getElementById('birthDate').value;
+            const license = document.getElementById('licenseKey').value;
+            const art = document.getElementById('artStyle').value;
+            
+            if(!license) { alert("Please type your Gumroad key to confirm access."); return; }
+            
+            // Redirect directly to the download stream
+            window.location.href = `/?action=download&name=${encodeURIComponent(name)}&birthday=${bday}&license=${encodeURIComponent(license)}&artwork=${art}`;
+        }
+    </script>
+</body>
+</html>
