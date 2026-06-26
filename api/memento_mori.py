@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import A3
 from reportlab.lib.units import mm
 
 def build_pdf_buffer(user_name, birth_date_str, expected_life):
-    """Generates a dynamic ReportLab PDF matrix scaling smoothly up to 100 years."""
+    """Generates a perfectly balanced dynamic ReportLab PDF matrix with adaptive borders and centering."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A3)
     width, height = A3
@@ -21,58 +21,56 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     except ValueError:
         birth_date = datetime(2000, 1, 1)
 
-    # Hardcoded to current date anchor in 2026
     current_date = datetime(2026, 6, 26)
     
-    # 1. Compute exact completed years
     age_years = current_date.year - birth_date.year
     if (current_date.month, current_date.day) < (birth_date.month, birth_date.day):
         age_years -= 1
         
-    # 2. Pinpoint most recent birthday
     try:
         last_birthday = birth_date.replace(year=current_date.year)
         if last_birthday > current_date:
             last_birthday = birth_date.replace(year=current_date.year - 1)
     except ValueError:
-        # Edge case handler for February 29 leap year births
         last_birthday = datetime(current_date.year, 2, 28)
         if last_birthday > current_date:
             last_birthday = datetime(current_date.year - 1, 2, 28)
 
-    # 3. Compute exact weeks elapsed since that last birthday
     days_since_birthday = (current_date - last_birthday).days
     weeks_this_year = int(days_since_birthday / 7)
-    
-    # 4. Sum absolute structural weeks to fill on the canvas layout
     total_weeks_lived = (age_years * 52) + weeks_this_year
 
-    # --- AUTOSCALING GEOMETRY ENGINE ---
-    # Shrinks font and structural components slightly if moving beyond 80 years to prevent page overflow
+    # --- RECALIBRATED MARGIN GEOMETRY ENGINE ---
     if expected_life > 80:
         box_size = 2.4*mm
         padding = 0.8*mm
         decade_gap = 3.5*mm
+        top_margin = 35*mm  # Push down slightly on 100 to balance the smaller matrix height
     else:
         box_size = 3.0*mm         
         padding = 1.0*mm          
         decade_gap = 4.3*mm 
+        top_margin = 25*mm
 
-    start_x = 60*mm 
+    start_x = 54*mm 
     gap_between_halves = 8*mm 
     
     total_grid_width = (52 * box_size) + (50 * padding) + gap_between_halves
     end_of_grid_x = start_x + total_grid_width
     
-    header_y = height - 25*mm 
+    header_y = height - top_margin 
     grid_start_y = header_y - 25*mm 
     
     num_decade_gaps = (expected_life - 1) // 10
     total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
     grid_end_y = grid_start_y - total_grid_height
-    box_bottom = grid_end_y - 18*mm 
+    
+    box_bottom = grid_end_y - 22*mm 
 
-    # --- BACKGROUND IMAGE LAYER ---
+    # --- CALCULATE THE TRUE MIDDLE OF THE GRID LOGIC ---
+    grid_center_y = grid_end_y + (total_grid_height / 2)
+
+    # --- BACKGROUND IMAGE LAYER (DYNAMICALLY ALIGNED) ---
     image_file = None
     for name in ["skull.png", "Skull.png", "skull.jpg", "Skull.jpg"]:
         if os.path.exists(name):
@@ -81,23 +79,25 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
 
     if image_file:
         c.saveState()
-        c.setFillAlpha(0.35) 
-        img_w, img_h = 270*mm, 350*mm 
-        c.drawImage(image_file, (width - img_w)/2 + 20*mm, box_bottom - 2*mm, 
+        c.setFillAlpha(0.24) 
+        img_w = 260*mm
+        img_h = 336*mm
+        # Lock image center precisely to the calculated grid center y axis
+        c.drawImage(image_file, (width - img_w)/2 + 13*mm, grid_center_y - (img_h / 2), 
                     width=img_w, height=img_h, mask='auto')
         c.restoreState()
 
     # --- VERTICAL TITLE SPINE ---
     c.setFont("Times-Bold", 42) 
     c.saveState()
-    c.translate(25*mm, height / 2 + 20*mm) 
+    c.translate(22*mm, grid_center_y) # Center the spine title with the matrix centerpoint
     c.rotate(90)
     c.drawCentredString(0, 0, "M  E  M  E  N  T  O     M  O  R  I")
     c.restoreState()
 
-    # --- BOUNDING BOX BORDER ---
+    # --- ADAPTIVE OUTER BOUNDING BOX ---
     c.setLineWidth(0.6)
-    c.rect(start_x - 18*mm, box_bottom, (end_of_grid_x - start_x) + 40*mm, (header_y + 8*mm - box_bottom))
+    c.rect(start_x - 16*mm, box_bottom, (end_of_grid_x - start_x) + 40*mm, (header_y + 8*mm - box_bottom))
 
     # --- GRID RENDER LOOP ---
     current_y = grid_start_y
@@ -113,13 +113,11 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         if year > 1 and (year-1) % 10 == 0: 
             current_y -= decade_gap 
         
-        # Row Labels (Ages)
         if year % 5 == 0:
             c.setFont("Helvetica-Bold", 8)
             c.setFillColorRGB(0, 0, 0)
-            c.drawRightString(start_x - 6*mm, current_y + (box_size * 0.2), str(year))
+            c.drawRightString(start_x - 6*mm, current_y + (box_size * 0.15), str(year))
 
-        # Column Labels (Weeks - Printed on First Row Only)
         if year == 1:
             c.setFont("Helvetica", 6)
             c.setFillColorRGB(0, 0, 0)
@@ -127,47 +125,43 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
                 x_idx = w_num - 1
                 off = (x_idx * (box_size + padding))
                 if x_idx >= 26: off += gap_between_halves
-                c.drawCentredString(start_x + off + (box_size/2), current_y + 6*mm, str(w_num))
+                c.drawCentredString(start_x + off + (box_size/2), current_y + 5*mm, str(w_num))
 
-        # Epoch Markers
         if year in epochs:
             c.saveState()
             c.setFont("Helvetica-Bold", 7.5)
             c.setFillColorRGB(0, 0, 0)
-            c.translate(end_of_grid_x + 8*mm, current_y - (decade_gap / 2) - 1.5*mm)
+            c.translate(end_of_grid_x + 8*mm, current_y - (box_size / 2))
             c.rotate(-90)
             c.drawCentredString(0, 0, epochs[year])
             c.restoreState()
 
-        # Box Allocator
         for week in range(52):
             x_offset = (week * (box_size + padding))
             if week >= 26: x_offset += gap_between_halves
             x = start_x + x_offset
             
             if ((year - 1) * 52) + week < total_weeks_lived:
-                # Lived week: Filled block
                 c.setFillColorRGB(0, 0, 0)
                 c.rect(x, current_y, box_size, box_size, fill=1, stroke=0)
             else:
-                # Remaining week: Empty border box
                 c.setStrokeColorRGB(0.2, 0.2, 0.2)
                 c.setLineWidth(0.1)
                 c.rect(x, current_y, box_size, box_size, fill=0, stroke=1)
         current_y -= (box_size + padding)
 
-    # --- CANVAS HEADERS & QUOTATION LAYERS ---
+    # --- CANVAS HEADERS & QUOTES ---
     c.setFillColorRGB(0, 0, 0)
     c.setFont("Helvetica-Bold", 16) 
-    c.drawRightString(end_of_grid_x, header_y, user_name.upper())
+    c.drawRightString(end_of_grid_x, header_y, user_name.upper() if user_name else "MATRIX MAP")
     c.setFont("Helvetica", 9)
     c.drawRightString(end_of_grid_x, header_y - 6*mm, f"ARCHIVAL MAP | {expected_life} YEAR POTENTIAL")
     
     c.setFont("Times-Italic", 11)
-    c.drawString(start_x, box_bottom + 8*mm, '"It is not that we have a short time to live,')
-    c.drawString(start_x, box_bottom + 4*mm, 'but that we waste a lot of it." - Seneca')
-    c.drawRightString(end_of_grid_x, box_bottom + 8*mm, '"Very little is needed to make a happy life;')
-    c.drawRightString(end_of_grid_x, box_bottom + 4*mm, 'it is all within yourself." - Marcus Aurelius')
+    c.drawString(start_x, box_bottom + 12*mm, '"It is not that we have a short time to live,')
+    c.drawString(start_x, box_bottom + 7*mm, 'but that we waste a lot of it." - Seneca')
+    c.drawRightString(end_of_grid_x, box_bottom + 12*mm, '"Very little is needed to make a happy life;')
+    c.drawRightString(end_of_grid_x, box_bottom + 7*mm, 'it is all within yourself." - Marcus Aurelius')
 
     c.showPage()
     c.save()
@@ -175,7 +169,55 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     buffer.seek(0)
     return buffer.getvalue()
 
+# --- STABLE PREMIUM HTML INTERFACE ---
+html_form = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 40px 20px; background: #000; color: #fff; margin: 0; }
+        .card { background: #111; padding: 30px; border-radius: 16px; max-width: 360px; margin: 40px auto; border: 1px solid #222; box-sizing: border-box; }
+        label { display: block; text-align: left; margin-bottom: 5px; color: #888; font-size: 14px; }
+        input { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 8px; box-sizing: border-box; }
+        input[type="date"] { color-scheme: dark; } 
+        
+        .slider-container { margin-bottom: 25px; text-align: left; }
+        .slider-val { float: right; color: #00ffcc; font-weight: bold; font-size: 16px; }
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: #222; height: 6px; border-radius: 3px; outline: none; margin-top: 8px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; cursor: pointer; }
+        
+        button { padding: 14px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+        p { color: #666; font-size: 14px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 style="letter-spacing: 2px; margin-bottom: 5px;">MEMENTO MORI</h2>
+        <p>Map your exact lifespan blueprint.</p>
+        
+        <form action="/" method="get" style="margin-top: 25px;">
+            <label>Your Name</label>
+            <input type="text" name="name" placeholder="Full Name" required>
+            
+            <label>Your Birthday</label>
+            <input type="date" name="birthday" max="2026-12-31" required>
+            
+            <div class="slider-container">
+                <label>Target Lifespan: <span class="slider-val" id="valDisplay">80</span></label>
+                <input type="range" name="lifespan" min="50" max="100" value="80" oninput="document.getElementById('valDisplay').innerText = this.value">
+            </div>
+            
+            <button type="submit">Generate Custom Blueprint</button>
+        </form>
+    </div>
+</body>
+</html>
+"""
 
+
+# --- VERCEL EXECUTION HANDLER ---
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         query_components = parse_qs(urlparse(self.path).query)
@@ -183,176 +225,13 @@ class handler(BaseHTTPRequestHandler):
         birth_date = query_components.get("birthday", [None])[0]
         expected_life_str = query_components.get("lifespan", [None])[0]
 
-        # 1. HTML FORM RENDERING
         if not user_name or not birth_date or not expected_life_str:
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            
-           html_form = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #000; color: #fff; margin: 0; }
-                    .card { background: #111; padding: 30px; border-radius: 16px; max-width: 360px; margin: 40px auto; border: 1px solid #222; box-sizing: border-box; }
-                    label { display: block; text-align: left; margin-bottom: 5px; color: #888; font-size: 14px; }
-                    input { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #333; background: #1a1a1a; color: #fff; border-radius: 8px; box-sizing: border-box; }
-                    input[type="date"] { color-scheme: dark; } 
-                    
-                    .slider-container { margin-bottom: 25px; text-align: left; }
-                    .slider-val { float: right; color: #00ffcc; font-weight: bold; font-size: 16px; }
-                    input[type="range"] { -webkit-appearance: none; width: 100%; background: #222; height: 6px; border-radius: 3px; outline: none; margin-top: 8px; }
-                    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; cursor: pointer; }
-                    
-                    button { padding: 14px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-                    p { color: #666; font-size: 14px; line-height: 1.4; }
-
-                    /* MODAL CONTAINER */
-                    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; overflow-y: auto; }
-                    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #111; border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 10; }
-                    .close-btn { background: #222; color: #aaa; border: 1px solid #333; padding: 8px 14px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-                    .download-btn { background: #00ffcc; color: #000; border: none; padding: 8px 14px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; text-decoration: none; }
-                    
-                    /* HIGHLY CALIBRATED RESPONSIVE LIFE MATRIX CONTAINER */
-                    .matrix-wrapper { max-width: 500px; margin: 30px auto; padding: 0 10px; box-sizing: border-box; font-family: monospace; }
-                    
-                    .year-row { display: flex; align-items: center; margin-bottom: 2px; }
-                    .year-label { width: 30px; text-align: right; padding-right: 10px; font-size: 10px; color: #555; font-weight: bold; }
-                    
-                    /* Splitting the weeks row container layout into two distinct blocks of 26 */
-                    .weeks-group { display: flex; flex: 1; gap: 2px; }
-                    .weeks-half { display: grid; grid-template-columns: repeat(26, 1fr); gap: 2px; flex: 1; }
-                    .center-gap { width: 6px; } /* Mimics the print blueprint gap */
-                    
-                    /* Premium minimalist dot styling */
-                    .dot { aspect-ratio: 1; background: #111; border: 1px solid #222; border-radius: 2px; }
-                    .dot.lived { background: #fff; border-color: #fff; }
-                    
-                    /* Decade break geometry padding */
-                    .decade-break { margin-bottom: 8px; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <h2 style="letter-spacing: 2px; margin-bottom: 5px;">MEMENTO MORI</h2>
-                    <p>Map your exact lifespan blueprint.</p>
-                    
-                    <form id="mapForm" style="margin-top: 25px;">
-                        <label>Your Name</label>
-                        <input type="text" id="name" placeholder="Full Name" required>
-                        
-                        <label>Your Birthday</label>
-                        <input type="date" id="birthday" max="2026-12-31" required>
-                        
-                        <div class="slider-container">
-                            <label>Target Lifespan: <span class="slider-val" id="valDisplay">80</span></label>
-                            <input type="range" id="lifespan" min="50" max="100" value="80" oninput="document.getElementById('valDisplay').innerText = this.value">
-                        </div>
-                        
-                        <button type="submit">Visualize My Life</button>
-                    </form>
-                </div>
-
-                <div id="pdfModal" class="modal">
-                    <div class="modal-header">
-                        <button class="close-btn" onclick="closeModal()">✕ Close</button>
-                        <span id="titleDisplay" style="font-weight: bold; letter-spacing: 1px; font-size: 14px;"></span>
-                        <a id="downloadLink" class="download-btn" href="#" target="_blank">Print PDF 📥</a>
-                    </div>
-                    
-                    <div class="matrix-wrapper">
-                        <p style="text-align: left; margin-bottom: 20px; color: #666; font-size: 12px; font-family: sans-serif;">EACH DOT REPRESENTS ONE WEEK OF YOUR LIFE MATRIX.</p>
-                        <div id="htmlGrid"></div>
-                    </div>
-                </div>
-
-                <script>
-                    document.getElementById('mapForm').addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        
-                        const name = document.getElementById('name').value;
-                        const bday = document.getElementById('birthday').value;
-                        const life = parseInt(document.getElementById('lifespan').value);
-                        
-                        document.getElementById('downloadLink').href = `/?name=${encodeURIComponent(name)}&birthday=${bday}&lifespan=${life}`;
-                        document.getElementById('titleDisplay').innerText = name.toUpperCase();
-
-                        // Precision math alignment
-                        const birthDate = new Date(bday);
-                        const currentDate = new Date('2026-06-26');
-                        const diffTime = Math.max(0, currentDate - birthDate);
-                        const totalWeeksLived = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
-
-                        const gridContainer = document.getElementById('htmlGrid');
-                        gridContainer.innerHTML = ''; 
-
-                        // Loop through every single year precisely 
-                        for (let y = 1; y <= life; y++) {
-                            const row = document.createElement('div');
-                            row.classList.add('year-row');
-                            if (y > 1 && (y - 1) % 10 === 0) {
-                                row.classList.add('decade-break');
-                            }
-
-                            // Left side year index labeling
-                            const label = document.createElement('div');
-                            label.classList.add('year-label');
-                            label.innerText = y % 5 === 0 ? y : '';
-                            row.appendChild(label);
-
-                            // Build the structural container halves
-                            const weeksGroup = document.createElement('div');
-                            weeksGroup.classList.add('weeks-group');
-
-                            const half1 = document.createElement('div');
-                            half1.classList.add('weeks-half');
-                            const half2 = document.createElement('div');
-                            half2.classList.add('weeks-half');
-
-                            for (let w = 0; w < 52; w++) {
-                                const globalWeekIndex = ((y - 1) * 52) + w;
-                                const dot = document.createElement('div');
-                                dot.classList.add('dot');
-                                
-                                if (globalWeekIndex < totalWeeksLived) {
-                                    dot.classList.add('lived');
-                                }
-
-                                if (w < 26) {
-                                    half1.appendChild(dot);
-                                } else {
-                                    half2.appendChild(dot);
-                                }
-                            }
-
-                            weeksGroup.appendChild(half1);
-                            
-                            const centerGap = document.createElement('div');
-                            centerGap.classList.add('center-gap');
-                            weeksGroup.appendChild(centerGap);
-                            
-                            weeksGroup.appendChild(half2);
-                            row.appendChild(weeksGroup);
-                            gridContainer.appendChild(row);
-                        }
-
-                        document.getElementById('pdfModal').style.display = 'flex';
-                    });
-
-                    function closeModal() {
-                        document.getElementById('pdfModal').style.display = 'none';
-                    }
-                </script>
-            </body>
-            </html>
-            """
             self.wfile.write(html_form.encode('utf-8'))
             return
 
-        # 2. APPLICATION/PDF STRINGS RESPONSE ENGINE
         try:
             expected_life = int(expected_life_str)
             pdf_data = build_pdf_buffer(user_name, birth_date, expected_life)
