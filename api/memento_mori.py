@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import A3
 from reportlab.lib.units import mm
 
 def build_pdf_buffer(user_name, birth_date_str, expected_life):
-    """Generates a perfectly balanced dynamic ReportLab PDF matrix with adaptive borders and centering."""
+    """Generates an archival-grade Memento Mori map with locked visual layout profiles."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A3)
     width, height = A3
@@ -40,14 +40,14 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     weeks_this_year = int(days_since_birthday / 7)
     total_weeks_lived = (age_years * 52) + weeks_this_year
 
- # --- FIXED ARCHIVAL GEOMETRY PROFILES ---
+    # --- RECALIBRATED ARCHIVAL GEOMETRY PROFILES ---
     if expected_life > 80:
         # Profile for 81-100 Lifespan
         box_size = 2.1*mm       
         padding = 0.7*mm
         decade_gap = 3.0*mm
         start_x = 54*mm
-        header_y = height - 38*mm  # Lowered to protect the bottom margin area
+        header_y = height - 38*mm  
         grid_start_y = header_y - 20*mm
         
         num_decade_gaps = (expected_life - 1) // 10
@@ -59,11 +59,11 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         title_center_y = 196*mm
     else:
         # Profile for <= 80 Lifespan
-        box_size = 2.8*mm          # Shifted slightly from 3.0 to raise bottom footprint
+        box_size = 2.8*mm          
         padding = 0.9*mm          
         decade_gap = 4.0*mm 
         start_x = 54*mm
-        header_y = height - 32*mm  # Lowered from 24mm to give the base plenty of breathing room
+        header_y = height - 32*mm  
         grid_start_y = header_y - 20*mm
         
         num_decade_gaps = (expected_life - 1) // 10
@@ -74,10 +74,11 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         img_center_y = 196*mm
         title_center_y = 196*mm
 
-    # --- CALCULATE THE TRUE MIDDLE OF THE GRID LOGIC ---
-    grid_center_y = grid_end_y + (total_grid_height / 2)
+    gap_between_halves = 8*mm
+    total_grid_width = (52 * box_size) + (50 * padding) + gap_between_halves
+    end_of_grid_x = start_x + total_grid_width
 
-    # --- BACKGROUND IMAGE LAYER (DYNAMICALLY ALIGNED) ---
+    # --- BACKGROUND IMAGE LAYER ---
     image_file = None
     for name in ["skull.png", "Skull.png", "skull.jpg", "Skull.jpg"]:
         if os.path.exists(name):
@@ -89,22 +90,22 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         c.setFillAlpha(0.24) 
         img_w = 260*mm
         img_h = 336*mm
-        # Lock image center precisely to the calculated grid center y axis
-        c.drawImage(image_file, (width - img_w)/2 + 13*mm, grid_center_y - (img_h / 2), 
+        c.drawImage(image_file, (width - img_w)/2 + 12*mm, img_center_y - (img_h / 2), 
                     width=img_w, height=img_h, mask='auto')
         c.restoreState()
 
     # --- VERTICAL TITLE SPINE ---
     c.setFont("Times-Bold", 42) 
     c.saveState()
-    c.translate(22*mm, grid_center_y) # Center the spine title with the matrix centerpoint
+    c.translate(22*mm, title_center_y)
     c.rotate(90)
     c.drawCentredString(0, 0, "M  E  M  E  N  T  O     M  O  R  I")
     c.restoreState()
 
-    # --- ADAPTIVE OUTER BOUNDING BOX ---
+    # --- OUTER BOUNDING BOX ---
     c.setLineWidth(0.6)
-    c.rect(start_x - 16*mm, box_bottom, (end_of_grid_x - start_x) + 40*mm, (header_y + 8*mm - box_bottom))
+    c.setStrokeColorRGB(0, 0, 0)
+    c.rect(start_x - 16*mm, box_bottom, (end_of_grid_x - start_x) + 40*mm, (header_y + 8*mm - box_bottom), fill=0, stroke=1)
 
     # --- GRID RENDER LOOP ---
     current_y = grid_start_y
@@ -175,6 +176,7 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     
     buffer.seek(0)
     return buffer.getvalue()
+
 
 # --- STABLE PREMIUM HTML INTERFACE ---
 html_form = """
