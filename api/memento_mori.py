@@ -196,8 +196,8 @@ class handler(BaseHTTPRequestHandler):
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 40px 20px; background: #111; color: #fff; margin: 0; }
-                    .card { background: #1a1a1a; padding: 30px; border-radius: 16px; max-width: 360px; margin: 40px auto; border: 1px solid #333; box-sizing: border-box; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #111; color: #fff; margin: 0; }
+                    .card { background: #1a1a1a; padding: 30px; border-radius: 16px; max-width: 360px; margin: 20px auto; border: 1px solid #333; box-sizing: border-box; }
                     label { display: block; text-align: left; margin-bottom: 5px; color: #aaa; font-size: 14px; }
                     input { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #444; background: #222; color: #fff; border-radius: 8px; box-sizing: border-box; }
                     input[type="date"] { color-scheme: dark; } 
@@ -210,12 +210,17 @@ class handler(BaseHTTPRequestHandler):
                     button { padding: 14px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
                     p { color: #888; font-size: 14px; line-height: 1.4; }
 
-                    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; }
-                    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #1a1a1a; border-bottom: 1px solid #333; }
-                    .modal-title { font-size: 16px; font-weight: bold; color: #fff; margin: 0; letter-spacing: 1px; }
-                    .close-btn { background: #ff4d4d; color: white; border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-                    .pdf-frame { width: 100%; height: 100%; border: none; background: #fff; }
-                    .loading-text { color: #00ffcc; font-size: 18px; margin-top: 50vh; transform: translateY(-50%); display: none; }
+                    /* SCREEN OVERLAY VIEW FOR INTERACTIVE DOTS */
+                    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 1000; flex-direction: column; overflow-y: auto; }
+                    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #1a1a1a; border-bottom: 1px solid #333; position: sticky; top: 0; }
+                    .close-btn { background: #333; color: white; border: 1px solid #444; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+                    .download-btn { background: #00ffcc; color: #000; border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; text-decoration: none; }
+                    
+                    /* CSS GRID THAT AUTOMATICALLY FITS SMARTPHONE SCALINGS */
+                    .grid-container { max-width: 450px; margin: 20px auto; padding: 10px; box-sizing: border-box; }
+                    .life-grid { display: grid; grid-template-columns: repeat(52, 1fr); gap: 1px; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+                    .dot { aspect-ratio: 1; border-radius: 1px; background: #222; border: 1px solid rgba(255,255,255,0.05); }
+                    .dot.lived { background: #00ffcc; border: none; }
                 </style>
             </head>
             <body>
@@ -235,56 +240,62 @@ class handler(BaseHTTPRequestHandler):
                             <input type="range" id="lifespan" min="50" max="100" value="80" oninput="document.getElementById('valDisplay').innerText = this.value">
                         </div>
                         
-                        <button type="submit">Generate Custom Map</button>
+                        <button type="submit">Visualize My Life</button>
                     </form>
                 </div>
 
                 <div id="pdfModal" class="modal">
                     <div class="modal-header">
-                        <span class="modal-title">YOUR MAP ENGINE</span>
-                        <button class="close-btn" onclick="closeModal()">✕ Close / Go Back</button>
+                        <button class="close-btn" onclick="closeModal()">✕ Back</button>
+                        <span id="titleDisplay" style="font-weight: bold; letter-spacing: 1px;">MY MATRIX</span>
+                        <a id="downloadLink" class="download-btn" href="#" target="_blank">Print PDF 📥</a>
                     </div>
-                    <div id="loading" class="loading-text">Weaving your life grid...</div>
-                    <iframe id="pdfViewer" class="pdf-frame"></iframe>
+                    
+                    <div class="grid-container">
+                        <p style="text-align: left; margin-bottom: 5px; color: #aaa;">Your lived weeks are highlighted below:</p>
+                        <div id="htmlGrid" class="life-grid"></div>
+                    </div>
                 </div>
 
                 <script>
-                    document.getElementById('mapForm').addEventListener('submit', async function(e) {
+                    document.getElementById('mapForm').addEventListener('submit', function(e) {
                         e.preventDefault();
                         
-                        const modal = document.getElementById('pdfModal');
-                        const loader = document.getElementById('loading');
-                        const viewer = document.getElementById('pdfViewer');
-                        
-                        modal.style.display = 'flex';
-                        loader.style.display = 'block';
-                        viewer.style.display = 'none';
-                        
-                        const name = encodeURIComponent(document.getElementById('name').value);
+                        const name = document.getElementById('name').value;
                         const bday = document.getElementById('birthday').value;
-                        const life = document.getElementById('lifespan').value;
+                        const life = parseInt(document.getElementById('lifespan').value);
                         
-                        const url = `/?name=${name}&birthday=${bday}&lifespan=${life}`;
+                        // 1. Setup the High-Res PDF download link attachment button
+                        const downloadUrl = `/?name=${encodeURIComponent(name)}&birthday=${bday}&lifespan=${life}`;
+                        document.getElementById('downloadLink').href = downloadUrl;
+                        document.getElementById('titleDisplay').innerText = name.toUpperCase();
+
+                        // 2. Compute exact weeks lived for screen rendering logic
+                        const birthDate = new Date(bday);
+                        const currentDate = new Date('2026-06-26');
+                        const diffTime = Math.max(0, currentDate - birthDate);
+                        const totalWeeksLived = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+                        const totalTargetWeeks = life * 52;
+
+                        // 3. Build the responsive grid array dynamically in HTML
+                        const gridContainer = document.getElementById('htmlGrid');
+                        gridContainer.innerHTML = ''; // Reset frame
                         
-                        try {
-                            const response = await fetch(url);
-                            const blob = await response.blob();
-                            const blobUrl = URL.createObjectURL(blob);
-                            
-                            viewer.src = blobUrl;
-                            loader.style.display = 'none';
-                            viewer.style.display = 'block';
-                        } catch (err) {
-                            alert('Failed to generate map metrics.');
-                            closeModal();
+                        for (let i = 0; i < totalTargetWeeks; i++) {
+                            const dot = document.createElement('div');
+                            dot.classList.add('dot');
+                            if (i < totalWeeksLived) {
+                                dot.classList.add('lived');
+                            }
+                            gridContainer.appendChild(dot);
                         }
+
+                        // Display full screen UI modal
+                        document.getElementById('pdfModal').style.display = 'flex';
                     });
 
                     function closeModal() {
-                        const modal = document.getElementById('pdfModal');
-                        const viewer = document.getElementById('pdfViewer');
-                        modal.style.display = 'none';
-                        viewer.src = '';
+                        document.getElementById('pdfModal').style.display = 'none';
                     }
                 </script>
             </body>
