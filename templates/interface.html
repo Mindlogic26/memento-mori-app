@@ -218,35 +218,40 @@
                 });
         }
 
-function adjustHourglassSand(spentPct) {
+        function adjustHourglassSand(spentPct) {
     const topSandRect = document.getElementById('topSandRect');
     const bottomSandRect = document.getElementById('bottomSandRect');
     const stream = document.getElementById('fallingSandStream');
     
-    // --- 1. TOP CHAMBER: Moves the top edge downward from Y=10 to Y=68 ---
-    // At 0% spent, height is full (58px). At 100% spent, height drops to 0.
-    const potentialFactor = (100 - spentPct) / 100;
-    const topCalculatedHeight = 58 * potentialFactor;
+    const potentialPct = 100 - spentPct;
+
+    // --- 1. TOP CHAMBER: Symmetrical Inverted Triangle Area ---
+    // The sand fills from the neck bottleneck (Y=68) up to the ceiling (Y=10).
+    // Because it's an inverted triangle, the mass scales with the square root of the remaining potential.
+    const topFactor = Math.sqrt(potentialPct / 100);
+    const topCalculatedHeight = 58 * topFactor;
     const topCalculatedY = 68 - topCalculatedHeight;
     
     topSandRect.setAttribute('y', topCalculatedY);
     topSandRect.setAttribute('height', topCalculatedHeight);
 
-    // --- 2. BOTTOM CHAMBER: Fills upward from floor (Y=127) towards neck (Y=72) ---
-    // Max fill height range is 55px. Moves y coordinate up as height increases.
-    const spentFactor = spentPct / 100;
-    const bottomCalculatedHeight = 55 * spentFactor;
+    // --- 2. BOTTOM CHAMBER: Standard Triangle Area ---
+    // The bottom bulb fills from the floor (Y=127) up toward the neck (Y=72).
+    // The empty space at the top of this bulb forms an empty inverted triangle.
+    // We calculate the empty triangle height using the square root of the potential percentage, 
+    // then subtract it from the total height to get the true sand level.
+    const emptyFactor = Math.sqrt(potentialPct / 100);
+    const bottomCalculatedHeight = 55 * (1 - emptyFactor);
     const bottomCalculatedY = 127 - bottomCalculatedHeight;
     
     bottomSandRect.setAttribute('y', bottomCalculatedY);
     bottomSandRect.setAttribute('height', bottomCalculatedHeight);
 
-    // --- 3. STREAM TOGGLE LOGIC ---
+    // --- 3. STREAM STREAM VISIBILITY ---
     if (spentPct <= 0 || spentPct >= 100) {
         stream.style.display = 'none';
     } else {
         stream.style.display = 'block';
-        // Snap the bottom of the stream dot line cleanly to meet the fluid surface level
         stream.setAttribute('y2', bottomCalculatedY);
     }
 }
