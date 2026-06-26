@@ -84,11 +84,8 @@
             <h1>TEMPORAL BALANCE</h1>
             <p class="subtitle" id="statsUserTitle">LIFETIME QUANTIFICATION</p>
             
-            <!-- Mathematically Calibrated Hourglass Structure matching image_e4fca4.png -->
+            <!-- Cleaned Hourglass Structure (Removed side label text completely) -->
             <div class="hourglass-wrapper">
-                <div class="hg-label-left">Potential</div>
-                <div class="hg-label-right">Spent</div>
-                
                 <svg class="glass-svg" viewBox="0 0 100 140" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <!-- Outer Framework Casing Endcaps -->
                     <line x1="10" y1="10" x2="90" y2="10" stroke="white" stroke-width="4" stroke-linecap="round"/>
@@ -98,10 +95,10 @@
                     <path d="M15 12 L48 68 C49 70 51 70 52 68 L85 12 Z" stroke="#333" stroke-width="1.5"/>
                     <path d="M15 128 L48 72 C49 70 51 70 52 72 L85 128 Z" stroke="#333" stroke-width="1.5"/>
                     
-                    <!-- TOP CHAMBER: Potential Sand Pool (Inverted Triangle Draining Down) -->
+                    <!-- TOP CHAMBER: Potential Sand Pool -->
                     <path id="topSand" d="M16 14 L48 68 L52 68 L84 14 Z" fill="#fff"/>
                     
-                    <!-- BOTTOM CHAMBER: Spent Sand Mound (Fills Up Uniformly From The Base Floor) -->
+                    <!-- BOTTOM CHAMBER: Spent Sand Mound (Will be mathematically restricted) -->
                     <path id="bottomSand" d="M16 126 L84 126 L84 126 L16 126 Z" fill="#fff"/>
                     
                     <!-- SAND FLOW spine: Real-Time Falling Dotted Sand Stream -->
@@ -214,36 +211,41 @@
         }
 
         function adjustHourglassSand(spentPct) {
-            const topSand = document.getElementById('topSand');
-            const bottomSand = document.getElementById('bottomSand');
-            const stream = document.getElementById('fallingSandStream');
-            
-            const potentialPct = 100 - spentPct;
+    const topSand = document.getElementById('topSand');
+    const bottomSand = document.getElementById('bottomSand');
+    const stream = document.getElementById('fallingSandStream');
+    
+    const potentialPct = 100 - spentPct;
 
-            // 1. Top Chamber Physics: Triangle polygon drains downward from ceiling
-            const topFactor = potentialPct / 100;
-            const topY = 68 - (54 * topFactor); 
-            const topLeftX = 50 - (34 * topFactor);
-            const topRightX = 50 + (34 * topFactor);
-            
-            topSand.setAttribute('d', `M${topLeftX} ${topY} L48 68 L52 68 L${topRightX} ${topY} Z`);
+    // 1. Top Chamber Calculus: Drains cleanly towards center neck
+    const topFactor = potentialPct / 100;
+    const topY = 68 - (54 * topFactor); 
+    const topLeftX = 50 - (34 * topFactor);
+    const topRightX = 50 + (34 * topFactor);
+    
+    topSand.setAttribute('d', `M${topLeftX} ${topY} L48 68 L52 68 L${topRightX} ${topY} Z`);
 
-            // 2. Bottom Chamber Physics: Sand mounds flatly upward from floor base (Y=126)
-            const bottomFactor = spentPct / 100;
-            const bottomY = 126 - (54 * bottomFactor); 
-            const bottomLeftMoundX = 50 - (34 * bottomFactor);
-            const bottomRightMoundX = 50 + (34 * bottomFactor);
-            
-            bottomSand.setAttribute('d', `M16 126 L84 126 L${bottomRightMoundX} ${bottomY} L${bottomLeftMoundX} ${bottomY} Z`);
+    // 2. Bottom Chamber Calculus: Constrains the width to match the sloped glass walls
+    const bottomFactor = spentPct / 100;
+    const bottomY = 126 - (54 * bottomFactor); 
+    
+    // Mathematically scales the left and right coordinates of the rising sand top surface
+    // to match the exact 15px to 48px angle profile of the glass boundary lines
+    const currentMoundWidthOffset = 34 - (16.5 * bottomFactor);
+    const bottomLeftMoundX = 50 - currentMoundWidthOffset;
+    const bottomRightMoundX = 50 + currentMoundWidthOffset;
+    
+    // Bottom baseline coordinates match glass corners exactly (Left: 16, Right: 84)
+    bottomSand.setAttribute('d', `M16 126 L84 126 L${bottomRightMoundX} ${bottomY} L${bottomLeftMoundX} ${bottomY} Z`);
 
-            // 3. Falling Stream Check
-            if (spentPct <= 0 || spentPct >= 100) {
-                stream.style.display = 'none';
-            } else {
-                stream.style.display = 'block';
-                stream.setAttribute('y2', bottomY); // Link terminal sand line node directly to mound surface coordinate
-            }
-        }
+    // 3. Falling Sand Stream logic
+    if (spentPct <= 0 || spentPct >= 100) {
+        stream.style.display = 'none';
+    } else {
+        stream.style.display = 'block';
+        stream.setAttribute('y2', bottomY);
+    }
+}
 
         function goToPage3() {
             const name = document.getElementById('userName').value;
