@@ -4,13 +4,11 @@ from datetime import datetime
 import io
 import os
 
-# Import ReportLab dependencies
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A3
 from reportlab.lib.units import mm
 
 def build_pdf_buffer(user_name, birth_date_str, expected_life):
-    """Generates a dynamic ReportLab PDF matrix scaling up to 100 years."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A3)
     width, height = A3
@@ -23,12 +21,10 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
 
     current_date = datetime(2026, 6, 26)
     
-    # 1. Age in completed years
     age_years = current_date.year - birth_date.year
     if (current_date.month, current_date.day) < (birth_date.month, birth_date.day):
         age_years -= 1
         
-    # 2. Most recent birthday
     try:
         last_birthday = birth_date.replace(year=current_date.year)
         if last_birthday > current_date:
@@ -38,19 +34,23 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         if last_birthday > current_date:
             last_birthday = datetime(current_date.year - 1, 2, 28)
 
-    # 3. Weeks lived since last birthday
     days_since_birthday = (current_date - last_birthday).days
     weeks_this_year = int(days_since_birthday / 7)
-    
-    # 4. Total absolute weeks to fill
     total_weeks_lived = (age_years * 52) + weeks_this_year
 
-    # --- DYNAMIC GEOMETRY CONFIGURATION ---
+    # --- AUTOSCALING GEOMETRY ENGINE ---
+    # Dynamically shrink boxes slightly if expanding up to 100 years to prevent bottom-edge cutoff
+    if expected_life > 80:
+        box_size = 2.4*mm
+        padding = 0.8*mm
+        decade_gap = 3.5*mm
+    else:
+        box_size = 3.0*mm         
+        padding = 1.0*mm          
+        decade_gap = 4.3*mm 
+
     start_x = 60*mm 
-    box_size = 3.0*mm         
-    padding = 1.0*mm          
     gap_between_halves = 8*mm 
-    decade_gap = 4.3*mm 
     
     total_grid_width = (52 * box_size) + (50 * padding) + gap_between_halves
     end_of_grid_x = start_x + total_grid_width
@@ -58,7 +58,6 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     header_y = height - 25*mm 
     grid_start_y = header_y - 25*mm 
     
-    # Calculate variable grid height based on the user's input choice
     num_decade_gaps = (expected_life - 1) // 10
     total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
     grid_end_y = grid_start_y - total_grid_height
@@ -91,7 +90,7 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     c.setLineWidth(0.6)
     c.rect(start_x - 18*mm, box_bottom, (end_of_grid_x - start_x) + 40*mm, (header_y + 8*mm - box_bottom))
 
-    # --- DYNAMIC LIFE GRID & LABELS ---
+    # --- LIFE GRID & LABELS ---
     current_y = grid_start_y
     epochs = {
         10: "SPRING: LEARNING", 
@@ -108,7 +107,7 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         if year % 5 == 0:
             c.setFont("Helvetica-Bold", 8)
             c.setFillColorRGB(0, 0, 0)
-            c.drawRightString(start_x - 6*mm, current_y + 0.8*mm, str(year))
+            c.drawRightString(start_x - 6*mm, current_y + (box_size * 0.2), str(year))
 
         if year == 1:
             c.setFont("Helvetica", 6)
@@ -169,7 +168,6 @@ class handler(BaseHTTPRequestHandler):
         birth_date = query_components.get("birthday", [None])[0]
         expected_life_str = query_components.get("lifespan", [None])[0]
 
-        # 1. Updated UI Form with Mobile Sliders
         if not user_name or not birth_date or not expected_life_str:
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
@@ -188,7 +186,6 @@ class handler(BaseHTTPRequestHandler):
                     input { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #444; background: #222; color: #fff; border-radius: 8px; box-sizing: border-box; }
                     input[type="date"] { color-scheme: dark; } 
                     
-                    /* Range Slider CSS */
                     .slider-container { margin-bottom: 25px; text-align: left; }
                     .slider-val { float: right; color: #00ffcc; font-weight: bold; font-size: 16px; }
                     input[type="range"] { -webkit-appearance: none; width: 100%; background: #333; height: 6px; border-radius: 3px; outline: none; margin-top: 8px; }
@@ -202,7 +199,8 @@ class handler(BaseHTTPRequestHandler):
                 <div class="card">
                     <h2 style="letter-spacing: 2px; margin-bottom: 5px;">MEMENTO MORI</h2>
                     <p>Map your exact lifespan blueprint.</p>
-                    <form action="/" method="get" style="margin-top: 25px;">
+                    
+                    <form action="/" method="get" target="_blank" style="margin-top: 25px;">
                         <label>Your Name</label>
                         <input type="text" name="name" placeholder="Full Name" required>
                         
@@ -223,7 +221,6 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(html_form.encode('utf-8'))
             return
 
-        # 2. Process custom data parameters
         try:
             expected_life = int(expected_life_str)
             pdf_data = build_pdf_buffer(user_name, birth_date, expected_life)
@@ -239,5 +236,5 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
-            self.wfile.write(f"Server Error occurred processing dynamic PDF: {str(e)}".encode('utf-8'))
+            self.wfile.write(f"Server Error: {str(e)}".encode('utf-8'))
         return
