@@ -39,13 +39,12 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
     days_since_birthday = (current_date - last_birthday).days
     weeks_this_year = int(days_since_birthday / 7)
     total_weeks_lived = (age_years * 52) + weeks_this_year
-
-    # --- RECALIBRATED ARCHIVAL GEOMETRY PROFILES ---
+# --- RECALIBRATED ARCHIVAL GEOMETRY PROFILES ---
     if expected_life > 80:
-        # Profile for 81-100 Lifespan
-        box_size = 2.1*mm       
-        padding = 0.7*mm
-        decade_gap = 3.0*mm
+        # Profile for 81-100 Lifespan (Sharper grid compression to reclaim massive margins)
+        box_size = 1.8*mm       
+        padding = 0.6*mm
+        decade_gap = 2.5*mm
         start_x = 54*mm
         header_y = height - 38*mm  
         grid_start_y = header_y - 20*mm
@@ -53,10 +52,10 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         num_decade_gaps = (expected_life - 1) // 10
         total_grid_height = (expected_life * (box_size + padding)) + (num_decade_gaps * decade_gap)
         grid_end_y = grid_start_y - total_grid_height
-        box_bottom = grid_end_y - 16*mm
+        box_bottom = grid_end_y - 22*mm  
         
-        img_center_y = 196*mm
-        title_center_y = 196*mm
+        img_center_y = 205*mm
+        title_center_y = 205*mm
     else:
         # Profile for <= 80 Lifespan
         box_size = 2.8*mm          
@@ -74,6 +73,7 @@ def build_pdf_buffer(user_name, birth_date_str, expected_life):
         img_center_y = 196*mm
         title_center_y = 196*mm
 
+    # These 3 lines execute ONCE right here to calculate the final frame width
     gap_between_halves = 8*mm
     total_grid_width = (52 * box_size) + (50 * padding) + gap_between_halves
     end_of_grid_x = start_x + total_grid_width
