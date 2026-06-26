@@ -1,20 +1,35 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
+from datetime import datetime
 import io
 import os
 
-# Import your ReportLab dependencies
+# Import ReportLab dependencies
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A3
 from reportlab.lib.units import mm
 
-def build_pdf_buffer(user_name, user_age):
-    """Generates the exact ReportLab PDF matrix directly into memory buffer."""
+def build_pdf_buffer(user_name, birth_date_str):
+    """Generates the ReportLab PDF matrix based on precision age calculation."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A3)
     width, height = A3
 
-    # --- 1. GEOMETRY: Calibrated for year/week labels ---
+    # --- Precision Math Engine ---
+    try:
+        birth_date = datetime.strptime(birth_date_str, "%Y-%m-%d")
+    except ValueError:
+        birth_date = datetime(2000, 1, 1) # Fallback
+
+    # Explicitly calculate exact age using the current date in 2026
+    current_date = datetime(2026, 6, 26)
+    delta_days = (current_date - birth_date).days
+    
+    # Calculate exact float age and exact total weeks lived
+    user_age = max(0.0, delta_days / 365.25)
+    total_weeks_lived = int(delta_days / 7)
+
+    # --- GEOMETRY ---
     start_x = 60*mm 
     box_size = 3.0*mm         
     padding = 1.0*mm          
@@ -29,9 +44,8 @@ def build_pdf_buffer(user_name, user_age):
     grid_end_y = grid_start_y - total_grid_height
     box_bottom = grid_end_y - 18*mm 
 
-    # --- 2. BACKGROUND IMAGE ---
+    # --- BACKGROUND IMAGE ---
     image_file = None
-    # Look for asset file in the root directory relative to this script
     for name in ["skull.png", "Skull.png", "skull.jpg", "Skull.jpg"]:
         if os.path.exists(name):
             image_file = name
@@ -45,7 +59,7 @@ def build_pdf_buffer(user_name, user_age):
                     width=img_w, height=img_h, mask='auto')
         c.restoreState()
 
-    # --- 3. VERTICAL TITLE SPINE ---
+    # --- VERTICAL TITLE SPINE ---
     c.setFont("Times-Bold", 42) 
     c.saveState()
     c.translate(25*mm, height / 2 + 20*mm) 
@@ -53,13 +67,12 @@ def build_pdf_buffer(user_name, user_age):
     c.drawCentredString(0, 0, "M  E  M  E  N  T  O     M  O  R  I")
     c.restoreState()
 
-    # --- 4. OUTER BOX ---
+    # --- OUTER BOX ---
     c.setLineWidth(0.6)
     c.rect(start_x - 18*mm, box_bottom, (end_of_grid_x - start_x) + 40*mm, (header_y + 8*mm - box_bottom))
 
-    # --- 5. THE LIFE GRID & LABELS ---
+    # --- THE LIFE GRID & LABELS ---
     current_y = grid_start_y
-    total_weeks_lived = int(user_age * 52)
     epochs = {
         10: "SPRING: LEARNING", 
         30: "SUMMER: ACTION", 
@@ -71,13 +84,11 @@ def build_pdf_buffer(user_name, user_age):
         if year > 1 and (year-1) % 10 == 0: 
             current_y -= decade_gap 
         
-        # YEAR LABELS (Left Side) 
         if year % 5 == 0:
             c.setFont("Helvetica-Bold", 8)
             c.setFillColorRGB(0, 0, 0)
             c.drawRightString(start_x - 6*mm, current_y + 0.8*mm, str(year))
 
-        # WEEK LABELS (Top Row Only) 
         if year == 1:
             c.setFont("Helvetica", 6)
             c.setFillColorRGB(0, 0, 0)
@@ -87,7 +98,6 @@ def build_pdf_buffer(user_name, user_age):
                 if x_idx >= 26: off += gap_between_halves
                 c.drawCentredString(start_x + off + (box_size/2), current_y + 6*mm, str(w_num))
 
-        # EPOCH LABELS (Right Side)
         if year in epochs:
             c.saveState()
             c.setFont("Helvetica-Bold", 7.5)
@@ -111,7 +121,7 @@ def build_pdf_buffer(user_name, user_age):
                 c.rect(x, current_y, box_size, box_size, fill=0, stroke=1)
         current_y -= (box_size + padding)
 
-    # --- 6. HEADER & QUOTES ---
+    # --- HEADER & QUOTES ---
     c.setFillColorRGB(0, 0, 0)
     c.setFont("Helvetica-Bold", 16) 
     c.drawRightString(end_of_grid_x, header_y, user_name.upper())
@@ -133,13 +143,12 @@ def build_pdf_buffer(user_name, user_age):
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # Parse inputs
         query_components = parse_qs(urlparse(self.path).query)
         user_name = query_components.get("name", [None])[0]
-        user_age_str = query_components.get("age", [None])[0]
+        birth_date = query_components.get("birthday", [None])[0] # Expects YYYY-MM-DD
 
-        # 1. UI Form: Serve mobile responsive HTML if data parameters are empty
-        if not user_name or not user_age_str:
+        # 1. UI Form (Optimized for Mobile Touch)
+        if not user_name or not birth_date:
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -153,18 +162,25 @@ class handler(BaseHTTPRequestHandler):
                 <style>
                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 40px 20px; background: #111; color: #fff; }
                     .card { background: #1a1a1a; padding: 30px; border-radius: 16px; max-width: 360px; margin: 40px auto; border: 1px solid #333; }
+                    label { display: block; text-align: left; margin-bottom: 5px; color: #aaa; font-size: 14px; }
                     input { padding: 14px; font-size: 16px; width: 100%; margin-bottom: 20px; border: 1px solid #444; background: #222; color: #fff; border-radius: 8px; box-sizing: border-box; }
+                    /* Makes native mobile calendar inputs look uniform */
+                    input[type="date"] { color-scheme: dark; } 
                     button { padding: 14px; font-size: 16px; background: #fff; color: #000; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
-                    p { color: #888; font-size: 14px; }
+                    p { color: #888; font-size: 14px; line-height: 1.4; }
                 </style>
             </head>
             <body>
                 <div class="card">
-                    <h2 style="letter-spacing: 2px;">MEMENTO MORI</h2>
-                    <p>Generate your custom high-resolution archival life calendar blueprint.</p>
-                    <form action="/" method="get">
-                        <input type="text" name="name" placeholder="Full Name" required><br>
-                        <input type="number" name="age" placeholder="Current Age" min="0" max="80" required><br>
+                    <h2 style="letter-spacing: 2px; margin-bottom: 5px;">MEMENTO MORI</h2>
+                    <p>Enter your exact details to map out your archival life canvas layout.</p>
+                    <form action="/" method="get" style="margin-top: 25px;">
+                        <label>Your Name</label>
+                        <input type="text" name="name" placeholder="Full Name" required>
+                        
+                        <label>Your Birthday</label>
+                        <input type="date" name="birthday" max="2026-12-31" required>
+                        
                         <button type="submit">Generate PDF Map</button>
                     </form>
                 </div>
@@ -174,14 +190,12 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(html_form.encode('utf-8'))
             return
 
-        # 2. PDF Processing: Generate and stream the document directly back
+        # 2. Process exact datetime data
         try:
-            user_age = float(user_age_str)
-            pdf_data = build_pdf_buffer(user_name, user_age)
+            pdf_data = build_pdf_buffer(user_name, birth_date)
             
             self.send_response(200)
             self.send_header('Content-type', 'application/pdf')
-            # Tells the phone browser to view it inside the window cleanly
             self.send_header('Content-Disposition', f'inline; filename="memento_mori_{user_name}.pdf"')
             self.end_headers()
             
@@ -191,5 +205,5 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
-            self.wfile.write(f"Server Error occurred processing PDF: {str(e)}".encode('utf-8'))
+            self.wfile.write(f"Server Error occurred processing precision PDF: {str(e)}".encode('utf-8'))
         return
