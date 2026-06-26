@@ -1,0 +1,8 @@
+{
+  "builds": [
+    { "src": "api/memento_mori.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "api/memento_mori.py" }
+  ]
+}
